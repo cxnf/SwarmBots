@@ -1,0 +1,4 @@
+string Name
+bool   Shutdown
+---
+int32 StaticID
