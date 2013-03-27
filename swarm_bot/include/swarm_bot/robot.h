@@ -25,8 +25,8 @@ class Robot
   //! Main constructor.
   /*!
     Constructor which initializes the class with provided data.
-    /param n Robot name, must be unique.
-    /param sid StaticID assigned to robot, must be unique.
+    \param n Robot name, must be unique.
+    \param sid StaticID assigned to robot, must be unique.
    */
   Robot(std::string n, int32_t sid);
 

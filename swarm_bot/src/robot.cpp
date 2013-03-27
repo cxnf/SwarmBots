@@ -3,7 +3,7 @@
 Robot::Robot() : staticID(0), dynamicID(0), heartbeat(0), missed(0), name() // zero out members
 {
 }
-Robot::Robot(std::string n, int32_t sid) : staticID(sid), dynamicID(0), heartbeat(0), missed(0), name(n)
+Robot::Robot(std::string n, int32_t sid) : staticID(sid), dynamicID(0), heartbeat(0), missed(0), name(n) // initialize members
 {
 }
 
@@ -35,7 +35,7 @@ int32_t Robot::GetMissedHeartbeats()
 bool Robot::Increment()
 {
   this->heartbeat++;                              // increment heartbeat
-  if (this->heartbeat > 5)                        // if heartbeat exceeds interval
+  if (this->heartbeat > 2)                        // if heartbeat exceeds interval
     {
       this->heartbeat = 0;                        // reset heartbeat
       this->missed++;                             // increment missed heartbeats

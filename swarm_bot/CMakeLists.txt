@@ -29,4 +29,5 @@ rosbuild_gensrv()
 #rosbuild_add_executable(example examples/example.cpp)
 #target_link_libraries(example ${PROJECT_NAME})
 
-rosbuild_add_library(swarm_bot src/swarm_bot.cpp)
+rosbuild_add_library(robot src/robot.cpp)
+rosbuild_add_executable(swarm_bot src/swarm_bot.cpp src/robot.cpp)
