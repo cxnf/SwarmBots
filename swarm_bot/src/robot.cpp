@@ -1,6 +1,6 @@
 #include "swarm_bot/robot.h"
 
-Robot::Robot() : staticID(0), dynamicID(0), heartbeat(0), missed(0), name() // zero out members
+Robot::Robot() : staticID(0), dynamicID(0), heartbeat(0), missed(0), name(), location() // zero out members
 {
 }
 Robot::Robot(std::string n, int32_t sid) : staticID(sid), dynamicID(0), heartbeat(0), missed(0), name(n) // initialize members
@@ -55,7 +55,14 @@ void Robot::SetDynamicID(int32_t did)
   this->dynamicID = did;                          // assign new dynamic id
 }
 
-Vector3f GetLocation()
+Vector3f Robot::GetLocation()
 {
   return this->location;                          // return location
+}
+
+void SetLocation(float _x, float _y, float _z)
+{
+  this->location.SetX(_x);                        // set x coord in vector
+  this->location.SetY(_y);                        // set y coord in vector
+  this->location.SetZ(_z);                        // set z coord in vector
 }

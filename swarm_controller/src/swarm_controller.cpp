@@ -26,6 +26,7 @@ void HeartbeatCallback(const swarm_bot::Heartbeat::ConstPtr &msg);
 
 // Local variables
 RobotMap robots;                                  // map linking static id to robot
+Formation formation;                              // formation manager
 int32_t nextID;                                   // next available number to assign as static id
 
 //! Program entry point.
@@ -43,7 +44,7 @@ int main(int32_t argc, char **argv)
   while (ros::ok())                               // remain in loop while node exists
     {
       second++;                                   // increment loops passed
-      if (second > 5)                     // if loop iterations passed is greater then frequency, a second should have passed
+      if (second > 5)                             // if loop iterations passed is greater then frequency, a second should have passed
 	{
 	  second = 0;                             // reset iteration counter
 	  RobotIterator it = robots.begin();      // get iterator at begin of map
@@ -54,7 +55,16 @@ int main(int32_t argc, char **argv)
 		  ROS_WARN("Robot missed heartbeat: [%d] amount [%d]", it->second.GetStaticID(), it->second.GetMissedHeartbeats()); // log warning
 		  if (!it->second.IsAlive())      // if robot is not alive
 		    {
+		      int count;
+		      int *sid, *did;
 		      ROS_WARN("Robot died: [%d]", it->second.GetStaticID()); // log warning
+		      if (formation.Unassign(it->second.GetStaticID(), &count, &sid, &did)) // if unassign caused invalidation
+			{
+			  for (int i = 0; i < count; i++) // loop through reassigned robots
+			    {
+			      ROS_INFO("Reassigned: [%d] -> [%d]", sid, did); // log info
+			    }
+			}
 		      robots.erase(it);           // erase it from the map
 		    }
 		}
@@ -105,8 +115,15 @@ bool AnnounceService(swarm_bot::Announce::Request &req, swarm_bot::Announce::Res
 
 bool TaskService(swarm_bot::Task::Request &req, swarm_bot::Task::Response &res)
 {
-  ROS_INFO("Task request: [%d]", req.StaticID);
-  res.DynamicID = 0;
+  for (RobotIterator it = robots.begin(); it != robots.end(); it++)
+    {
+      if (it->second.GetStaticID() == req.StaticID)
+	{
+	  return false;
+	}
+    }
+  res.DynamicID = formation.Assign(req.StaticID);  
+  ROS_INFO("Task assign: [%d] -> [%d]", req.StaticID, res.DynamicID);
   return true;
 }
 

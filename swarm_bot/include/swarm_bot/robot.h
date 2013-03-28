@@ -2,6 +2,7 @@
 
 #include <string>
 #include "ros/ros.h"
+#include "vector3f.h"
 
 //! Robot class.
 /*!
@@ -89,10 +90,19 @@ class Robot
    */
   void SetDynamicID(int32_t did);
   
-  //! Get location.
+  //! Gets location.
   /*!
     Returns the estimated location of the robot.
     \return Robot location.
    */
   Vector3f GetLocation();
+
+  //! Sets location.
+  /*!
+    Updates the location of the robot.
+    \param x X coordinate.
+    \param y Y coordinate.
+    \param z Z coordinate.
+  */
+  void SetLocation(float _x, float _y, float _z);
 };
