@@ -12,6 +12,8 @@
 *.la
 *.a
 
+*.map
+
 swarm_bot/Makefile
 swarm_bot/bin/
 swarm_bot/build/

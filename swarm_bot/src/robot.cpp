@@ -54,3 +54,8 @@ void Robot::SetDynamicID(int32_t did)
 {
   this->dynamicID = did;                          // assign new dynamic id
 }
+
+Vector3f GetLocation()
+{
+  return this->location;                          // return location
+}

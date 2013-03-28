@@ -15,7 +15,7 @@ class Robot
   int32_t heartbeat;                              // time passed since last heartbeat
   int32_t missed;                                 // amount of heartbeats missed in succession
   std::string name;                               // robot name
-  Vector3f *location;                             // estimated location of the robot
+  Vector3f location;                              // estimated location of the robot
 
  public:
   //! Default constructor.
@@ -91,10 +91,8 @@ class Robot
   
   //! Get location.
   /*!
-    Returns a value indicating the robot has a location.
-    When the robot has a location it is set to 'v0'.
-    \param v0 Location of the robot.
-    \return Value indicating robot has a location.
+    Returns the estimated location of the robot.
+    \return Robot location.
    */
-  bool GetLocation(Vector3f *v0);
+  Vector3f GetLocation();
 };
