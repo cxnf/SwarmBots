@@ -60,7 +60,7 @@ Vector3f Robot::GetLocation()
   return this->location;                          // return location
 }
 
-void SetLocation(float _x, float _y, float _z)
+void Robot::SetLocation(float _x, float _y, float _z)
 {
   this->location.SetX(_x);                        // set x coord in vector
   this->location.SetY(_y);                        // set y coord in vector
