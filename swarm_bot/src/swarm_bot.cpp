@@ -57,11 +57,11 @@ int main(int argc, char **argv)
 	  msg.StaticID = self->GetStaticID();     // initialize staticID in the message
 	  msg.X = self->GetLocation().GetX();
 	  msg.Y = self->GetLocation().GetY();
-	  msg.z = self->GetLocation().GetZ();
+	  msg.Z = self->GetLocation().GetZ();
 	  heartbeat.publish(msg);                 // send message to the topic 
 	}
       
-      rate.sleep();                               // sleep off remaining time
+      rate.sleep();                               // sleep off remaining tiem
     }
   
   announceSrv.request.Shutdown = true;            // set shutdown flag
@@ -82,7 +82,7 @@ int main(int argc, char **argv)
 
 }
 
-void SonarCallback( sensor_msgs::PointCloud::ConstPtr &msg)
+void SonarCallback(const sensor_msgs::PointCloud::ConstPtr &msg)
 {
 
 }
@@ -91,10 +91,6 @@ void PoseCallback(const nav_msgs::Odometry::ConstPtr &msg)
 {
   if(self)
     {
-      self->setLocation(msg.pose.pose.posititon.x,msg.pose.pose.posititon.y,msg.pose.pose.posititon.z);
-    }
-  else
-    {
-      return 3;
+      self->SetLocation(msg->pose.pose.position.x,msg->pose.pose.position.y,msg->pose.pose.position.z);
     }
 }
