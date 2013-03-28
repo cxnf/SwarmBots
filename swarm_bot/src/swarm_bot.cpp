@@ -1,5 +1,20 @@
 #include "swarm_bot/swarm_bot.h"
 
+// Prototypes.
+//! Sonar handler.
+/*! 
+  Reads and processes sonar readings.
+  \param msg Sonar readings.
+ */ 
+void SonarCallback(const sensor_msgs::PointCloud::ConstPtr &msg);
+//! Pose handler.
+/*! 
+  Reads the odometry data.
+  \param msg .
+ */
+void PoseCallback(const nav_msgs::Odometry::ConstPtr &msg);
+
+// Variables.
 Robot *self;                                      // pointer to logical representation of self
 
 int main(int argc, char **argv)
@@ -11,8 +26,11 @@ int main(int argc, char **argv)
   ros::NodeHandle node;                           // obtain handle to node
   ros::Publisher heartbeat = node.advertise<swarm_bot::Heartbeat>("heartbeat", 32); // create publisher to heartbeat topic
   ros::ServiceClient announce = node.serviceClient<swarm_bot::Announce>("announce"); // ceate client for announce service
+  ros::Subscriber sonar = node.subscribe("/RosAria/sonar", 32, SonarCallback);  // create subscriber for the sonar callback
+  ros::Subscriber pose = node.subscribe("/RosAria/pose", 32, PoseCallback);  // create subscriber for the pose callback
   ros::Rate rate(FREQUENCY);                      // create loop rate with predefined frequency
   swarm_bot::Announce announceSrv;                // allocate request to service
+  
   
   announceSrv.request.Name = "Test";              // initialize request name
   announceSrv.request.Shutdown = false;           // clear shutdown flag, robot is starting
@@ -37,7 +55,9 @@ int main(int argc, char **argv)
 	  seconds = 0;                            // reset counter
 	  swarm_bot::Heartbeat msg;               // allocate msg to heartbeat
 	  msg.StaticID = self->GetStaticID();     // initialize staticID in the message
-	  
+	  msg.X = self->GetLocation().GetX();
+	  msg.Y = self->GetLocation().GetY();
+	  msg.z = self->GetLocation().GetZ();
 	  heartbeat.publish(msg);                 // send message to the topic 
 	}
       
@@ -59,4 +79,22 @@ int main(int argc, char **argv)
       delete self;                                // free self
     }
   return 0;                                       // return success
+
+}
+
+void SonarCallback( sensor_msgs::PointCloud::ConstPtr &msg)
+{
+
+}
+
+void PoseCallback(const nav_msgs::Odometry::ConstPtr &msg)
+{
+  if(self)
+    {
+      self->setLocation(msg.pose.pose.posititon.x,msg.pose.pose.posititon.y,msg.pose.pose.posititon.z);
+    }
+  else
+    {
+      return 3;
+    }
 }
