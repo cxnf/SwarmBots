@@ -2,13 +2,12 @@
 \mainpage
 \htmlinclude manifest.html
 
-\b swarm_bot 
+\b SwarmBots
 
 <!-- 
 Provide an overview of your package.
 -->
 
--->
-
+ROS node for controlling a swarm of robots.
 
 */

@@ -40,6 +40,7 @@ int main(int argc, char **argv)
 	  
 	  heartbeat.publish(msg);                 // send message to the topic 
 	}
+      
       rate.sleep();                               // sleep off remaining time
     }
   

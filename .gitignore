@@ -11,3 +11,15 @@
 *.lai
 *.la
 *.a
+
+swarm_bot/Makefile
+swarm_bot/bin/
+swarm_bot/build/
+swarm_bot/doc/
+swarm_bot/msg_gen/
+swarm_bot/src/swarm_bot/
+swarm_bot/srv_gen/
+
+swarm_controller/Makefile
+swarm_controller/bin/
+swarm_controller/build/

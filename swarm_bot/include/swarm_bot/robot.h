@@ -15,6 +15,7 @@ class Robot
   int32_t heartbeat;                              // time passed since last heartbeat
   int32_t missed;                                 // amount of heartbeats missed in succession
   std::string name;                               // robot name
+  Vector3f *location;                             // estimated location of the robot
 
  public:
   //! Default constructor.
@@ -87,4 +88,13 @@ class Robot
     \param did New DynamicID.
    */
   void SetDynamicID(int32_t did);
+  
+  //! Get location.
+  /*!
+    Returns a value indicating the robot has a location.
+    When the robot has a location it is set to 'v0'.
+    \param v0 Location of the robot.
+    \return Value indicating robot has a location.
+   */
+  bool GetLocation(Vector3f *v0);
 };
