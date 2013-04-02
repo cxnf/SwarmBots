@@ -24,10 +24,14 @@ bool TaskService(swarm_bot::Task::Request &req, swarm_bot::Task::Response &res);
 */
 void HeartbeatCallback(const swarm_bot::Heartbeat::ConstPtr &msg);
 
+
+
 // Local variables
 RobotMap robots;                                  // map linking static id to robot
 Formation formation;                              // formation manager
 int32_t nextID;                                   // next available number to assign as static id
+
+
 
 //! Program entry point.
 int main(int32_t argc, char **argv)
@@ -80,6 +84,20 @@ int main(int32_t argc, char **argv)
   robots.clear();                                 // clear the map
   return 0;                                       // exit program
 }
+
+
+bool ContainsValue(RobotMap *map, int32_t StaticID)
+{
+  for (RobotIterator it = map->begin(); it != map->end(); it++) // iterate through map
+    {
+      if (it->second.GetStaticID() == StaticID)   // if robot has same static id
+	{
+	  return true;                            // return robot exists
+	}
+    }
+  return false;                                   // return robot does not exists
+}
+
 
 bool AnnounceService(swarm_bot::Announce::Request &req, swarm_bot::Announce::Response &res)
 {

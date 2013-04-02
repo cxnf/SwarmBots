@@ -43,3 +43,12 @@ void Vector3f::Add(Vector3f *v0)
   this->y += v0->GetY();                          // add and assign y coord
   this->z += v0->GetZ();                          // add and assign z coord
 }
+
+float Vector3f::Length()
+{
+  return sqrt(this->LengthSquared());             // return the square root of the squared length
+}
+float Vector3f::LengthSquared()
+{
+  return pow(this->x, 2) + pow(this->y, 2) + pow(this->z, 2); // return the squared length
+}

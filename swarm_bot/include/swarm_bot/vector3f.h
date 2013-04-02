@@ -1,5 +1,7 @@
 #pragma once
 
+#include "cmath"
+
 //! Vector 3D float
 /*!
   Position in 3D space using single-precision floating-point.
@@ -55,11 +57,25 @@ class Vector3f
    */
   void SetZ(float _z);
   
-  // TODO: add math functions as needed
+  // TODO: add math functions as needed // ---------------------------
+
   //! Adds two vectors.
   /*!
     Adds the components of given vector to the components of this vector.
    */
   void Add(Vector3f *v0);
-};
 
+  //! Returns the length.
+  /*!
+    Returns the length of the vector.
+    \return Vector length.
+   */
+  float Length();
+  //! Returns the length before the square root.
+  /*!
+    Returns the length of the vector before the square root.
+    Provides a faster way to obtain a valid value for length comparing, but requires only works when all lengths are squared.
+    \return Squared vector length.
+   */
+  float LengthSquared();
+};

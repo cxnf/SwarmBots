@@ -61,6 +61,7 @@ int main(int argc, char **argv)
 	  heartbeat.publish(msg);                 // send message to the topic 
 	}
       
+      ros::spinOnce();                            // allows callbacks to be called
       rate.sleep();                               // sleep off remaining tiem
     }
   
@@ -84,7 +85,7 @@ int main(int argc, char **argv)
 
 void SonarCallback(const sensor_msgs::PointCloud::ConstPtr &msg)
 {
-
+  
 }
 
 void PoseCallback(const nav_msgs::Odometry::ConstPtr &msg)
