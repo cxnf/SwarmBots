@@ -81,4 +81,10 @@ class Vector3f
     \return Squared vector length.
    */
   float LengthSquared();
+  
+  //! Normalize vector.
+  /*!
+    Normalizes the vector to a unit vector.
+   */
+  void Normalize();
 };

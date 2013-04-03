@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <cmath>
 #include "ros/ros.h"
 #include "vector3f.h"
 
@@ -17,6 +18,7 @@ class Robot
   int32_t missed;                                 // amount of heartbeats missed in succession
   std::string name;                               // robot name
   Vector3f location;                              // estimated location of the robot
+  float orientation;                              // estimated orientation of the robot
 
  public:
   //! Default constructor.
@@ -99,10 +101,24 @@ class Robot
 
   //! Sets location.
   /*!
-    Updates the location of the robot.
-    \param x X coordinate.
-    \param y Y coordinate.
-    \param z Z coordinate.
+    Updates the local location of the robot.
+    \param _x X coordinate.
+    \param _y Y coordinate.
+    \param _z Z coordinate.
   */
   void SetLocation(float _x, float _y, float _z);
+
+  //! Gets orientation.
+  /*!
+    Returns the estimated orientation of the robot.
+    \return Robot orientation.
+   */
+  float GetOrientation(); /* Orientation must be in global space not local */
+  
+  //! Sets orientation.
+  /*!
+    Updates the local orientation of the robot.
+    \param _r Orientation.
+   */
+  void SetOrientation(float _r);
 };

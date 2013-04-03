@@ -52,3 +52,11 @@ float Vector3f::LengthSquared()
 {
   return pow(this->x, 2) + pow(this->y, 2) + pow(this->z, 2); // return the squared length
 }
+
+void Vector3f::Normalize()
+{
+  float l = this->Length();                       // obtain current length
+  this->x /= l;                                   // divide x coord by length
+  this->y /= l;                                   // divide y coord by length
+  this->z /= l;                                   // divide z coord by langth
+}

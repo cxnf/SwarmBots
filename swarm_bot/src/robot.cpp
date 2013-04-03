@@ -66,3 +66,13 @@ void Robot::SetLocation(float _x, float _y, float _z)
   this->location.SetY(_y);                        // set y coord in vector
   this->location.SetZ(_z);                        // set z coord in vector
 }
+
+float Robot::GetOrientation()
+{
+  return this->orientation;                       // return orientation
+}
+
+void Robot::SetOrientation(float _r)
+{
+  this->orientation = _r;                         // set orientation
+}
