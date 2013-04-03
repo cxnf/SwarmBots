@@ -1,5 +1,5 @@
 #include "swarm_bot/swarm_bot.h"
-
+#include <cmath>
 // Prototypes.
 //! Sonar handler.
 /*! 
@@ -85,7 +85,9 @@ int main(int argc, char **argv)
 
 void SonarCallback(const sensor_msgs::PointCloud::ConstPtr &msg)
 {
-  
+  for (int i = 0; i < msg->points.size(); i++)
+    {
+    }
 }
 
 void PoseCallback(const nav_msgs::Odometry::ConstPtr &msg)
@@ -93,5 +95,7 @@ void PoseCallback(const nav_msgs::Odometry::ConstPtr &msg)
   if (self)                                       // if self is allocated
     {
       self->SetLocation(msg->pose.pose.position.x, msg->pose.pose.position.y, msg->pose.pose.position.z); // update robot position
+      double r = tf::getYaw(msg->pose.pose.orientation);
+      ROS_INFO("Orientation: [%f]", r);
     }
 }
