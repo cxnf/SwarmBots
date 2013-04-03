@@ -95,7 +95,7 @@ class Robot
     Returns the estimated location of the robot.
     \return Robot location.
    */
-  Vector3f GetLocation();
+  Vector3f GetLocation(); /* Location must be in global space not local */
 
   //! Sets location.
   /*!

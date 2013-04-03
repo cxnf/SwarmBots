@@ -28,16 +28,19 @@ class Vector3f
   //! Gets x coordinate.
   /*!
     Returns the x component of the vector.
+    \return X coordinate.
    */
   float GetX();
   //! Gets y coordinate.
   /*!
     Returns the y component of the vector.
+    \return Y coordinate.
    */
   float GetY();
   //! Gets z coordinate.
   /*!
     Returns the z component of the vector.
+    \return Z coordinate.
    */
   float GetZ();
 

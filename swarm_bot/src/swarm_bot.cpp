@@ -10,7 +10,7 @@ void SonarCallback(const sensor_msgs::PointCloud::ConstPtr &msg);
 //! Pose handler.
 /*! 
   Reads the odometry data.
-  \param msg .
+  \param msg Odometry status.
  */
 void PoseCallback(const nav_msgs::Odometry::ConstPtr &msg);
 
@@ -30,7 +30,6 @@ int main(int argc, char **argv)
   ros::Subscriber pose = node.subscribe("/RosAria/pose", 32, PoseCallback);  // create subscriber for the pose callback
   ros::Rate rate(FREQUENCY);                      // create loop rate with predefined frequency
   swarm_bot::Announce announceSrv;                // allocate request to service
-  
   
   announceSrv.request.Name = "Test";              // initialize request name
   announceSrv.request.Shutdown = false;           // clear shutdown flag, robot is starting
@@ -55,9 +54,9 @@ int main(int argc, char **argv)
 	  seconds = 0;                            // reset counter
 	  swarm_bot::Heartbeat msg;               // allocate msg to heartbeat
 	  msg.StaticID = self->GetStaticID();     // initialize staticID in the message
-	  msg.X = self->GetLocation().GetX();
-	  msg.Y = self->GetLocation().GetY();
-	  msg.Z = self->GetLocation().GetZ();
+	  msg.X = self->GetLocation().GetX();     // present x coordinate of robot position
+	  msg.Y = self->GetLocation().GetY();     // present y coordinate of robot position
+	  msg.Z = self->GetLocation().GetZ();     // present z coordinate of robot position
 	  heartbeat.publish(msg);                 // send message to the topic 
 	}
       
@@ -65,22 +64,23 @@ int main(int argc, char **argv)
       rate.sleep();                               // sleep off remaining tiem
     }
   
-  announceSrv.request.Shutdown = true;            // set shutdown flag
-  if (!announce.call(announceSrv))                // send request to the service, if error
-    {
-      ROS_ERROR("Could not shutdown. UNSTOPPABLE"); // log error
-    }
-  else
-    {
-      ROS_INFO("Response: [%d]", announceSrv.response.StaticID);
-    }
+  /* CAN NOT ANNOUNCE SHUT DOWN, ROS NODE IS ALREADY SHUT DOWN.
+     announceSrv.request.Shutdown = true;            // set shutdown flag
+     if (!announce.call(announceSrv))                // send request to the service, if error
+     {
+     ROS_ERROR("Could not shutdown. UNSTOPPABLE"); // log error
+     }
+     else
+     {
+     ROS_INFO("Response: [%d]", announceSrv.response.StaticID);
+     }
+  */
   
   if (self)                                       // if self is allocated
     {
       delete self;                                // free self
     }
   return 0;                                       // return success
-
 }
 
 void SonarCallback(const sensor_msgs::PointCloud::ConstPtr &msg)
@@ -90,8 +90,8 @@ void SonarCallback(const sensor_msgs::PointCloud::ConstPtr &msg)
 
 void PoseCallback(const nav_msgs::Odometry::ConstPtr &msg)
 {
-  if(self)
+  if (self)                                       // if self is allocated
     {
-      self->SetLocation(msg->pose.pose.position.x,msg->pose.pose.position.y,msg->pose.pose.position.z);
+      self->SetLocation(msg->pose.pose.position.x, msg->pose.pose.position.y, msg->pose.pose.position.z); // update robot position
     }
 }
