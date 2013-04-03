@@ -1,5 +1,5 @@
 #include "swarm_bot/swarm_bot.h"
-#include <cmath>
+
 // Prototypes.
 //! Sonar handler.
 /*! 
@@ -85,8 +85,12 @@ int main(int argc, char **argv)
 
 void SonarCallback(const sensor_msgs::PointCloud::ConstPtr &msg)
 {
-  for (int i = 0; i < msg->points.size(); i++)
+  for (int i = 0; i < msg->points.size(); i++)    // loops through available ultrasonic sensors
     {
+      //ROS_INFO("Point:  (%f;%f;%f)", msg->points[i].x, msg->points[i].y, msg->points[i].z);
+      float o = atan2(msg->points[i].x,msg->points[i].y); // extract jaw from vector
+      o -= M_PI_2;                                // transform sensor space
+      o = (Mod((o + M_PI), PI2) - M_PI);          // wrap around range pi .. -pi
     }
 }
 
@@ -95,7 +99,17 @@ void PoseCallback(const nav_msgs::Odometry::ConstPtr &msg)
   if (self)                                       // if self is allocated
     {
       self->SetLocation(msg->pose.pose.position.x, msg->pose.pose.position.y, msg->pose.pose.position.z); // update robot position
-      double r = tf::getYaw(msg->pose.pose.orientation);
-      ROS_INFO("Orientation: [%f]", r);
+      double r = tf::getYaw(msg->pose.pose.orientation); // extract yaw
+      self->SetOrientation((float)r);             // set orientation
     }
+}
+
+float inline Mod(float x, float y) 
+{
+  if( 0 == y)                                     // denominator can't be zero
+    {
+      return x;                                   // return nominator
+    }
+
+  return x - y * floor(x / y);                    // perform modulo
 }
