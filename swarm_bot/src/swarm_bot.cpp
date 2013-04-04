@@ -94,9 +94,12 @@ void SonarCallback(const sensor_msgs::PointCloud::ConstPtr &msg)
       //ROS_INFO("Point:  (%f;%f;%f)", msg->points[i].x, msg->points[i].y, msg->points[i].z);
       float o = atan2(msg->points[i].x,msg->points[i].y); // extract jaw from vector
       o -= M_PI_2;                                // transform sensor space
-      o = (Mod((o + M_PI), PI2) - M_PI);          // wrap around range pi .. -pi
-      
+      o = (Mod((o + M_PI), PI2) - M_PI);          // wrap around range pi .. -pi      
       // TODO: process angle and distance (if any)
+      // vector -> vector3f(xyz) -> length
+      // o hebben we de hoek bepaald
+      float diff  = fabs(self->GetOrientation() - o); // angle for the sensor relatively to the robot
+      
     }
 }
 
@@ -107,6 +110,7 @@ void PoseCallback(const nav_msgs::Odometry::ConstPtr &msg)
       self->SetLocation(msg->pose.pose.position.x, msg->pose.pose.position.y, msg->pose.pose.position.z); // update robot position
       double r = tf::getYaw(msg->pose.pose.orientation); // extract yaw
       self->SetOrientation((float)r);             // set orientation
+
     }
 }
 
