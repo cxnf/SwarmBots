@@ -1,8 +1,9 @@
 #pragma once
 
+#include <cmath>
+#include <csignal>
 #include "ros/ros.h"
 #include "swarm_bot/robot.h"
-#include <cmath>
 #include "tf/transform_datatypes.h"
 
 #include "swarm_bot/Heartbeat.h"
@@ -13,4 +14,18 @@
 #define FREQUENCY 10                              // loop frequency
 #define PI2       6.283185307                     // Pi times two
 
+//! Modulo for floats.
+/*!
+  Returns the remainder of a division.
+  \param x Numinator.
+  \param y Denominator.
+  \return Remainder of division.
+ */
 float inline Mod(float x, float y);
+
+//! Signal handler.
+/*!
+  Handles SIGINT signals.
+  \param s Signal intger.
+ */
+void SIGINTHandler(int s);

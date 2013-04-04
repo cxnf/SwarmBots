@@ -16,22 +16,38 @@ void PoseCallback(const nav_msgs::Odometry::ConstPtr &msg);
 
 // Variables.
 Robot *self;                                      // pointer to logical representation of self
+std::string name;                                 // name of the robot
+ros::Publisher heartbeat;                         // 
+ros::ServiceClient announce;                      // 
+ros::Subscriber sonar;                            // 
+ros::Subscriber pose;                             // 
+
+
 
 int main(int argc, char **argv)
 {
   int32_t seconds = 0;                            // counter to estimate when second elapsed
   self = 0;                                       // clear memory of pointer to self
-  
   ros::init(argc, argv, "swarm_bot");             // initialize ros
   ros::NodeHandle node;                           // obtain handle to node
-  ros::Publisher heartbeat = node.advertise<swarm_bot::Heartbeat>("heartbeat", 32); // create publisher to heartbeat topic
-  ros::ServiceClient announce = node.serviceClient<swarm_bot::Announce>("announce"); // ceate client for announce service
-  ros::Subscriber sonar = node.subscribe("/RosAria/sonar", 32, SonarCallback);  // create subscriber for the sonar callback
-  ros::Subscriber pose = node.subscribe("/RosAria/pose", 32, PoseCallback);  // create subscriber for the pose callback
+  ros::NodeHandle private_node("~");              // 
+  
+  private_node.param<std::string>("name", name, "_name_"); // 
+  
+  heartbeat = node.advertise<swarm_bot::Heartbeat>("heartbeat", 32); // create publisher to heartbeat topic
+  announce = node.serviceClient<swarm_bot::Announce>("announce"); // ceate client for announce service
+  sonar = node.subscribe("/RosAria/sonar", 32, SonarCallback);  // create subscriber for the sonar callback
+  pose = node.subscribe("/RosAria/pose", 32, PoseCallback);  // create subscriber for the pose callback
   ros::Rate rate(FREQUENCY);                      // create loop rate with predefined frequency
   swarm_bot::Announce announceSrv;                // allocate request to service
   
-  announceSrv.request.Name = "Test";              // initialize request name
+  struct sigaction sih;                           // 
+  sih.sa_handler = SIGINTHandler;                 // 
+  sigemptyset(&sih.sa_mask);                      // 
+  sih.sa_flags = 0;                               // 
+  sigaction(SIGINT, &sih, 0);                     // 
+
+  announceSrv.request.Name = name.c_str();        // initialize request name
   announceSrv.request.Shutdown = false;           // clear shutdown flag, robot is starting
   if (announce.call(announceSrv))                 // send request to the service, if no error
     {
@@ -39,7 +55,7 @@ int main(int argc, char **argv)
 	{
 	  return 1;                               // return error
 	}
-      self = new Robot("Test", announceSrv.response.StaticID); // create logical representation of self
+      self = new Robot(name.c_str(), announceSrv.response.StaticID); // create logical representation of self
     }
   else                                            // if announce service error
     {
@@ -64,18 +80,6 @@ int main(int argc, char **argv)
       rate.sleep();                               // sleep off remaining tiem
     }
   
-  /* CAN NOT ANNOUNCE SHUT DOWN, ROS NODE IS ALREADY SHUT DOWN.
-     announceSrv.request.Shutdown = true;            // set shutdown flag
-     if (!announce.call(announceSrv))                // send request to the service, if error
-     {
-     ROS_ERROR("Could not shutdown. UNSTOPPABLE"); // log error
-     }
-     else
-     {
-     ROS_INFO("Response: [%d]", announceSrv.response.StaticID);
-     }
-  */
-  
   if (self)                                       // if self is allocated
     {
       delete self;                                // free self
@@ -85,12 +89,14 @@ int main(int argc, char **argv)
 
 void SonarCallback(const sensor_msgs::PointCloud::ConstPtr &msg)
 {
-  for (int i = 0; i < msg->points.size(); i++)    // loops through available ultrasonic sensors
+  for (unsigned int i = 0; i < msg->points.size(); i++)    // loops through available ultrasonic sensors
     {
       //ROS_INFO("Point:  (%f;%f;%f)", msg->points[i].x, msg->points[i].y, msg->points[i].z);
       float o = atan2(msg->points[i].x,msg->points[i].y); // extract jaw from vector
       o -= M_PI_2;                                // transform sensor space
       o = (Mod((o + M_PI), PI2) - M_PI);          // wrap around range pi .. -pi
+      
+      // TODO: process angle and distance (if any)
     }
 }
 
@@ -102,6 +108,22 @@ void PoseCallback(const nav_msgs::Odometry::ConstPtr &msg)
       double r = tf::getYaw(msg->pose.pose.orientation); // extract yaw
       self->SetOrientation((float)r);             // set orientation
     }
+}
+
+void SIGINTHandler(int s)
+{
+  swarm_bot::Announce announceSrv;                // 
+  announceSrv.request.Name = name.c_str();        // initialize request name
+  announceSrv.request.Shutdown = true;            // set shutdown flag
+  if (!announce.call(announceSrv))                // send request to the service, if error
+    {
+      ROS_ERROR("Could not shutdown. UNSTOPPABLE"); // log error
+    }
+  else
+    {
+      ROS_INFO("Response: [%d]", announceSrv.response.StaticID); // 
+    }
+  ros::shutdown();                                // 
 }
 
 float inline Mod(float x, float y) 
