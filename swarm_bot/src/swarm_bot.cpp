@@ -17,10 +17,10 @@ void PoseCallback(const nav_msgs::Odometry::ConstPtr &msg);
 // Variables.
 Robot *self;                                      // pointer to logical representation of self
 std::string name;                                 // name of the robot
-ros::Publisher heartbeat;                         // 
-ros::ServiceClient announce;                      // 
-ros::Subscriber sonar;                            // 
-ros::Subscriber pose;                             // 
+ros::Publisher heartbeat;                         // publisher to heartbeat topic
+ros::ServiceClient announce;                      // client for announce service
+ros::Subscriber sonar;                            // subscriber to sonar topic
+ros::Subscriber pose;                             // subscriber to pose topic
 
 
 
@@ -30,9 +30,9 @@ int main(int argc, char **argv)
   self = 0;                                       // clear memory of pointer to self
   ros::init(argc, argv, "swarm_bot");             // initialize ros
   ros::NodeHandle node;                           // obtain handle to node
-  ros::NodeHandle private_node("~");              // 
+  ros::NodeHandle private_node("~");              // create a private node for params
   
-  private_node.param<std::string>("name", name, "_name_"); // 
+  private_node.param<std::string>("name", name, "_name_"); // get robot name from param server
   
   heartbeat = node.advertise<swarm_bot::Heartbeat>("heartbeat", 32); // create publisher to heartbeat topic
   announce = node.serviceClient<swarm_bot::Announce>("announce"); // ceate client for announce service
@@ -41,11 +41,11 @@ int main(int argc, char **argv)
   ros::Rate rate(FREQUENCY);                      // create loop rate with predefined frequency
   swarm_bot::Announce announceSrv;                // allocate request to service
   
-  struct sigaction sih;                           // 
-  sih.sa_handler = SIGINTHandler;                 // 
-  sigemptyset(&sih.sa_mask);                      // 
-  sih.sa_flags = 0;                               // 
-  sigaction(SIGINT, &sih, 0);                     // 
+  struct sigaction sih;                           // alloc struct for signal handling
+  sih.sa_handler = SIGINTHandler;                 // set handler for SIGINT signal
+  sigemptyset(&sih.sa_mask);                      // clear memory
+  sih.sa_flags = 0;                               // clear flags
+  sigaction(SIGINT, &sih, 0);                     // register signal handler
 
   announceSrv.request.Name = name.c_str();        // initialize request name
   announceSrv.request.Shutdown = false;           // clear shutdown flag, robot is starting
@@ -89,7 +89,7 @@ int main(int argc, char **argv)
 
 void SonarCallback(const sensor_msgs::PointCloud::ConstPtr &msg)
 {
-  for (unsigned int i = 0; i < msg->points.size(); i++)    // loops through available ultrasonic sensors
+  for (unsigned int i = 0; i < msg->points.size(); i++) // loops through available ultrasonic sensors
     {
       //ROS_INFO("Point:  (%f;%f;%f)", msg->points[i].x, msg->points[i].y, msg->points[i].z);
       float o = atan2(msg->points[i].x,msg->points[i].y); // extract jaw from vector
@@ -116,18 +116,14 @@ void PoseCallback(const nav_msgs::Odometry::ConstPtr &msg)
 
 void SIGINTHandler(int s)
 {
-  swarm_bot::Announce announceSrv;                // 
+  swarm_bot::Announce announceSrv;                // allocate service request
   announceSrv.request.Name = name.c_str();        // initialize request name
   announceSrv.request.Shutdown = true;            // set shutdown flag
   if (!announce.call(announceSrv))                // send request to the service, if error
     {
       ROS_ERROR("Could not shutdown. UNSTOPPABLE"); // log error
     }
-  else
-    {
-      ROS_INFO("Response: [%d]", announceSrv.response.StaticID); // 
-    }
-  ros::shutdown();                                // 
+  ros::shutdown();                                // shutdown node
 }
 
 float inline Mod(float x, float y) 

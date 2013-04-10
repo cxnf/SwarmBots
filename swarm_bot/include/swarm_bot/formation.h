@@ -13,6 +13,13 @@ class FormationProvider
 {
  public:
   virtual ~FormationProvider() {}
+  
+  //! Returns offset from formation center. 
+  /*!
+    Returns the offset from the center of the formation based on the dynamic id.
+    \param DynamicID Dynamic id.
+    \return Offset from center.
+   */
   virtual Vector3f GetOffset(int32_t DynamicID) = 0;
 };
 
