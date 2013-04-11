@@ -30,4 +30,5 @@ rosbuild_gensrv()
 #target_link_libraries(example ${PROJECT_NAME})
 
 rosbuild_add_library(robot src/robot.cpp src/vector3f.cpp src/formation.cpp)
-rosbuild_add_executable(swarm_bot src/swarm_bot.cpp src/robot.cpp src/vector3f.cpp src/formation.cpp)
+rosbuild_add_executable(swarm_bot src/swarm_bot.cpp src/robot.cpp src/vector3f.cpp src/formation.cpp src/loader.cpp)
+target_link_libraries(swarm_bot -lconfig++)

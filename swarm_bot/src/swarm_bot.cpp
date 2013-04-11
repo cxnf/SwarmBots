@@ -32,6 +32,9 @@ int main(int argc, char **argv)
   ros::NodeHandle node;                           // obtain handle to node
   ros::NodeHandle private_node("~");              // create a private node for params
   
+  Configuration cfg;
+  Load(&cfg);
+
   private_node.param<std::string>("name", name, "_name_"); // get robot name from param server
   
   heartbeat = node.advertise<swarm_bot::Heartbeat>("heartbeat", 32); // create publisher to heartbeat topic
