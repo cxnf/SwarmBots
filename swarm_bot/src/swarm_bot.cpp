@@ -16,7 +16,6 @@ void PoseCallback(const nav_msgs::Odometry::ConstPtr &msg);
 
 // Variables.
 Robot *self;                                      // pointer to logical representation of self
-std::string name;                                 // name of the robot
 ros::Publisher heartbeat;                         // publisher to heartbeat topic
 ros::ServiceClient announce;                      // client for announce service
 ros::Subscriber sonar;                            // subscriber to sonar topic
@@ -28,21 +27,22 @@ int main(int argc, char **argv)
 {
   int32_t seconds = 0;                            // counter to estimate when second elapsed
   self = 0;                                       // clear memory of pointer to self
-  ros::init(argc, argv, "swarm_bot");             // initialize ros
-  ros::NodeHandle node;                           // obtain handle to node
-  ros::NodeHandle private_node("~");              // create a private node for params
-  
-  Configuration cfg;
-  Load(&cfg);
 
-  private_node.param<std::string>("name", name, "_name_"); // get robot name from param server
+  Configuration *cfg = new Configuration;         // allocate configuration
+  if (LoadConfig(cfg, "~/.swarm_bot.cfg"))        // load config and check result
+    {
+      delete cfg;                                 // free configuration
+      return ERR_CONFIG;                          // return error
+    }
+
+  ros::init(argc, argv, cfg->name.c_str());       // initialize ros
+  ros::NodeHandle node;                           // obtain handle to node
+  ros::Rate rate(FREQUENCY);                      // create loop rate with predefined frequency
   
   heartbeat = node.advertise<swarm_bot::Heartbeat>("heartbeat", 32); // create publisher to heartbeat topic
   announce = node.serviceClient<swarm_bot::Announce>("announce"); // ceate client for announce service
-  sonar = node.subscribe("/RosAria/sonar", 32, SonarCallback);  // create subscriber for the sonar callback
-  pose = node.subscribe("/RosAria/pose", 32, PoseCallback);  // create subscriber for the pose callback
-  ros::Rate rate(FREQUENCY);                      // create loop rate with predefined frequency
-  swarm_bot::Announce announceSrv;                // allocate request to service
+  sonar = node.subscribe((cfg->basename + "/sonar").c_str(), 32, SonarCallback);  // create subscriber for the sonar callback
+  pose = node.subscribe((cfg->basename + "/pose").c_str(), 32, PoseCallback);  // create subscriber for the pose callback
   
   struct sigaction sih;                           // alloc struct for signal handling
   sih.sa_handler = SIGINTHandler;                 // set handler for SIGINT signal
@@ -50,19 +50,23 @@ int main(int argc, char **argv)
   sih.sa_flags = 0;                               // clear flags
   sigaction(SIGINT, &sih, 0);                     // register signal handler
 
-  announceSrv.request.Name = name.c_str();        // initialize request name
+  swarm_bot::Announce announceSrv;                // allocate request to service
+  announceSrv.request.Name = cfg->name.c_str();        // initialize request name
   announceSrv.request.Shutdown = false;           // clear shutdown flag, robot is starting
   if (announce.call(announceSrv))                 // send request to the service, if no error
     {
       if (announceSrv.response.StaticID <= 0)     // if staticID is invalid
 	{
-	  return 1;                               // return error
+	  delete cfg;                             // free configuration
+	  return ERR_SWARM_CONTROLLER;            // return error
 	}
-      self = new Robot(name.c_str(), announceSrv.response.StaticID); // create logical representation of self
+      self = new Robot(cfg->name.c_str(), announceSrv.response.StaticID); // create logical representation of self
+      delete cfg;                                 // free configuration
     }
   else                                            // if announce service error
     {
-      return 2;                                   // return error
+      delete cfg;                                 // free configuration
+      return ERR_ROS_SERVICE;                     // return error
     }
   
   while (ros::ok())                               // while ros is ok
@@ -87,7 +91,7 @@ int main(int argc, char **argv)
     {
       delete self;                                // free self
     }
-  return 0;                                       // return success
+  return OK_SUCCESS;                              // return success
 }
 
 void SonarCallback(const sensor_msgs::PointCloud::ConstPtr &msg)
@@ -102,7 +106,6 @@ void SonarCallback(const sensor_msgs::PointCloud::ConstPtr &msg)
       // vector -> vector3f(xyz) -> length
       // o hebben we de hoek bepaald
       float diff  = fabs(self->GetOrientation() - o); // angle for the sensor relatively to the robot
-      
     }
 }
 
@@ -119,8 +122,9 @@ void PoseCallback(const nav_msgs::Odometry::ConstPtr &msg)
 
 void SIGINTHandler(int s)
 {
+  printf("\n");
   swarm_bot::Announce announceSrv;                // allocate service request
-  announceSrv.request.Name = name.c_str();        // initialize request name
+  announceSrv.request.Name = self->GetName().c_str(); // initialize request name
   announceSrv.request.Shutdown = true;            // set shutdown flag
   if (!announce.call(announceSrv))                // send request to the service, if error
     {
