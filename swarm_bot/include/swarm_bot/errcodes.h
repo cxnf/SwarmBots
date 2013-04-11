@@ -13,6 +13,8 @@ enum ErrCodes
     ERR_SWARM_CONTROLLER,
 
     ERR_ARIA_GENERAL,
+    ERR_ARIA_CONNECTION,
+    ERR_ARIA_PARSE,
 
     _out_of_bounds,
   };
