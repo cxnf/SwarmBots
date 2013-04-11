@@ -95,7 +95,7 @@ void SonarCallback(const sensor_msgs::PointCloud::ConstPtr &msg)
   for (unsigned int i = 0; i < msg->points.size(); i++) // loops through available ultrasonic sensors
     {
       //ROS_INFO("Point:  (%f;%f;%f)", msg->points[i].x, msg->points[i].y, msg->points[i].z);
-      float o = atan2(msg->points[i].x,msg->points[i].y); // extract jaw from vector
+      float o = atan2f(msg->points[i].x,msg->points[i].y); // extract yaw from vector
       o -= M_PI_2;                                // transform sensor space
       o = (Mod((o + M_PI), PI2) - M_PI);          // wrap around range pi .. -pi      
       // TODO: process angle and distance (if any)
@@ -113,7 +113,7 @@ void PoseCallback(const nav_msgs::Odometry::ConstPtr &msg)
       self->SetLocation(msg->pose.pose.position.x, msg->pose.pose.position.y, msg->pose.pose.position.z); // update robot position
       double r = tf::getYaw(msg->pose.pose.orientation); // extract yaw
       self->SetOrientation((float)r);             // set orientation
-
+      
     }
 }
 
