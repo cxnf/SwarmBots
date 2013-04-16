@@ -2,11 +2,11 @@
 
 #include <cmath>
 #include <csignal>
+#include <sys/utsname.h>
+#include <boost/regex.hpp>
 #include "ros/ros.h"
 #include "swarm_bot/errcodes.h"
 #include "swarm_bot/robot.h"
-#include "swarm_bot/loader.h"
-// #include "swarm_bot/sensordata.h"
 #include "tf/transform_datatypes.h"
 
 #include "swarm_bot/Heartbeat.h"
