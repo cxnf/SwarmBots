@@ -15,6 +15,8 @@ enum ErrCodes
     ERR_ARIA_GENERAL,
     ERR_ARIA_CONNECTION,
     ERR_ARIA_PARSE,
+    ERR_ARIA_SONAR,
+    ERR_ARIA_LASER,
 
     _out_of_bounds,
   };

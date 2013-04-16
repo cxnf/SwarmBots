@@ -13,6 +13,7 @@
 *.a
 
 *.map
+*.h~
 
 swarm_bot/Makefile
 swarm_bot/bin/
@@ -21,7 +22,23 @@ swarm_bot/doc/
 swarm_bot/msg_gen/
 swarm_bot/src/swarm_bot/
 swarm_bot/srv_gen/
+swarm_bot/CATKIN_IGNORE
+swarm_bot/CMakeCache.txt
+swarm_bot/CMakeFiles/
+swarm_bot/catkin/
+swarm_bot/catkin_generated/
+swarm_bot/cmake_install.cmake
+swarm_bot/devel/
+swarm_bot/gtest/
 
 swarm_controller/Makefile
 swarm_controller/bin/
 swarm_controller/build/
+swarm_controller/CATKIN_IGNORE
+swarm_controller/CMakeCache.txt
+swarm_controller/CMakeFiles
+swarm_controller/catkin/
+swarm_controller/catkin_generated/
+swarm_controller/cmake_install.cmake
+swarm_controller/devel/
+swarm_controller/gtest/
