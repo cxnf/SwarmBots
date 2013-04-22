@@ -16,11 +16,14 @@ void PoseCallback(const nav_msgs::Odometry::ConstPtr &msg);
 
 // Variables.
 Robot *self;                                      // pointer to logical representation of self
+AriaInterface core;                               // aria client layer
+LoopState lstate;                                 // state of the robot
 std::string name;                                 // robot name
 ros::Publisher heartbeat;                         // publisher to heartbeat topic
 ros::ServiceClient announce;                      // client for announce service
 ros::Subscriber sonar;                            // subscriber to sonar topic
 ros::Subscriber pose;                             // subscriber to pose topic
+int32_t isrunning = 1;
 
 
 
@@ -28,6 +31,7 @@ int main(int argc, char **argv)
 {
   int32_t seconds = 0;                            // counter to estimate when second elapsed
   self = 0;                                       // clear memory of pointer to self
+  lstate = LS_SEEK;
 
   {
     utsname buf;                                  // temp storage for computer name
@@ -50,7 +54,9 @@ int main(int argc, char **argv)
   announce = node.serviceClient<swarm_bot::Announce>("announce"); // ceate client for announce service
   // sonar = node.subscribe((cfg->basename + "/sonar").c_str(), 32, SonarCallback);  // create subscriber for the sonar callback
   // pose = node.subscribe((cfg->basename + "/pose").c_str(), 32, PoseCallback);  // create subscriber for the pose callback
-  
+  core.StartUp(&argc, argv);
+  // core.AvoidObjects();
+
   struct sigaction sih;                           // alloc struct for signal handling
   sih.sa_handler = SIGINTHandler;                 // set handler for SIGINT signal
   sigemptyset(&sih.sa_mask);                      // clear memory
@@ -74,7 +80,7 @@ int main(int argc, char **argv)
     }
   
   ROS_INFO("I am [%s] aka [%d].", name.c_str(), self->GetStaticID()); // log summary of startup data
-  while (ros::ok())                               // while ros is ok
+  while (isrunning)                               // while ros is ok
     {
       seconds++;                                  // increment loop count
       if (seconds > FREQUENCY)                    // if counter exceeds frequency
@@ -88,10 +94,27 @@ int main(int argc, char **argv)
 	  heartbeat.publish(msg);                 // send message to the topic 
 	}
       
+      // ------------------------------------------------------------------
+      switch (lstate)
+	{
+	case LS_SEEK:
+	  {
+	    float a, d;
+	    if (core.SearchRobotInView(&a, &d))
+	      {
+		ROS_INFO("No robot found!");
+	      }
+	  }
+	}
+      // ------------------------------------------------------------------
+      
       ros::spinOnce();                            // allows callbacks to be called
-      rate.sleep();                               // sleep off remaining tiem
+      rate.sleep();                               // sleep off remaining time
     }
   
+  core.Shutdown();
+  printf("Have a nice day!\n");
+
   if (self)                                       // if self is allocated
     {
       delete self;                                // free self
@@ -99,43 +122,49 @@ int main(int argc, char **argv)
   return OK_SUCCESS;                              // return success
 }
 
+
 void SonarCallback(const sensor_msgs::PointCloud::ConstPtr &msg)
 {
-  for (unsigned int i = 0; i < msg->points.size(); i++) // loops through available ultrasonic sensors
-    {
-      //ROS_INFO("Point:  (%f;%f;%f)", msg->points[i].x, msg->points[i].y, msg->points[i].z);
-      float o = atan2f(msg->points[i].x,msg->points[i].y); // extract yaw from vector
-      o -= M_PI_2;                                // transform sensor space
-      o = (Mod((o + M_PI), PI2) - M_PI);          // wrap around range pi .. -pi      
-      // TODO: process angle and distance (if any)
-      // vector -> vector3f(xyz) -> length
-      // o hebben we de hoek bepaald
-      float diff  = fabs(self->GetOrientation() - o); // angle for the sensor relatively to the robot
-    }
+  // for (unsigned int i = 0; i < msg->points.size(); i++) // loops through available ultrasonic sensors
+  // {
+  // ROS_INFO("Point:  (%f;%f;%f)", msg->points[i].x, msg->points[i].y, msg->points[i].z);
+  // float o = atan2f(msg->points[i].x,msg->points[i].y); // extract yaw from vector
+  // o -= M_PI_2;                                // transform sensor space
+  // o = (Mod((o + M_PI), PI2) - M_PI);          // wrap around range pi .. -pi      
+  // TODO: process angle and distance (if any)
+  // vector -> vector3f(xyz) -> length
+  // o hebben we de hoek bepaald
+  // float diff  = fabs(self->GetOrientation() - o); // angle for the sensor relatively to the robot
+  // }
 }
-
 void PoseCallback(const nav_msgs::Odometry::ConstPtr &msg)
 {
-  if (self)                                       // if self is allocated
-    {
-      self->SetLocation(msg->pose.pose.position.x, msg->pose.pose.position.y, msg->pose.pose.position.z); // update robot position
-      double r = tf::getYaw(msg->pose.pose.orientation); // extract yaw
-      self->SetOrientation((float)r);             // set orientation
-    }
+  // if (self)                                       // if self is allocated
+  // {
+  // self->SetLocation(msg->pose.pose.position.x, msg->pose.pose.position.y, msg->pose.pose.position.z); // update robot position
+  // double r = tf::getYaw(msg->pose.pose.orientation); // extract yaw
+  // self->SetOrientation((float)r);             // set orientation
+  // }
 }
+
 
 void SIGINTHandler(int s)
 {
   printf("\n");
+  if (!isrunning)
+    return;
   swarm_bot::Announce announceSrv;                // allocate service request
   announceSrv.request.Name = self->GetName().c_str(); // initialize request name
   announceSrv.request.Shutdown = true;            // set shutdown flag
   if (!announce.call(announceSrv))                // send request to the service, if error
     {
       ROS_ERROR("Could not shutdown. UNSTOPPABLE"); // log error
+      printf("Could not shutdown. UNSTOPPABLE\n"); // log error
     }
-  ros::shutdown();                                // shutdown node
+  isrunning = 0;
+  printf("Good night.\n");
 }
+
 
 float inline Mod(float x, float y) 
 {

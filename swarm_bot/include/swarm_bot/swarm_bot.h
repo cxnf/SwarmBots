@@ -7,6 +7,7 @@
 #include "ros/ros.h"
 #include "swarm_bot/errcodes.h"
 #include "swarm_bot/robot.h"
+#include "swarm_bot/AriaInterface.h"
 #include "tf/transform_datatypes.h"
 
 #include "swarm_bot/Heartbeat.h"
@@ -16,6 +17,16 @@
 
 #define FREQUENCY 10                              // loop frequency
 #define PI2       6.283185307                     // Pi times two
+
+
+typedef enum
+  {
+    LS_SEEK,
+    LS_WAIT_OTHERS,
+    LS_SEEK_SIGNAL,
+    LS_SEND_SIGNAL,
+    
+  }  LoopState;
 
 //! Modulo for floats.
 /*!

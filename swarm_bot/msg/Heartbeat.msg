@@ -1,4 +1,4 @@
 int32 StaticID
-float32 X
-float32 Y
-float32 Z
+float64 X
+float64 Y
+float64 Z

@@ -15,6 +15,9 @@ class AriaInterface
   ArActionAvoidFront        *avoidFrontFar;
   ArActionConstantVelocity  *constantVelocity;
 
+  // ----------------------------------------------------------------------
+  ArLaser *laser;
+
  public:
 
   //! Function to start Aria.
@@ -40,7 +43,13 @@ class AriaInterface
     
     
    */
-  int AvoidObjects();
+  void AvoidObjects();
   
   
-}
+
+  // ----------------------------------------------------------------------
+  float GetRelativeAngle();
+  int32_t SearchRobotInView(float *angle, float *distance);
+  float GetDistanceAt(float angle);
+  void Rotate(float speed);
+};
