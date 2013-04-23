@@ -51,4 +51,5 @@ public:
   
   int GetPriority(int staticID);
   int GetStaticID(unsigned int priority);
+  int GetNextID(int staticID);
 };

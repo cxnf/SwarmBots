@@ -3,6 +3,7 @@
 /*! \file swarmbot.h++
   \brief Contains main class.
  */
+#define VERBOSE
 
 // ----------------- Libraries ---------------------------------------------------------------------
 #include <cmath>
@@ -11,6 +12,7 @@
 #include "ros/ros.h"
 
 // ----------------- Project Parts -----------------------------------------------------------------
+#include "assist.h++"
 #include "errcodes.h++"
 #include "rangefinder.h++"
 #include "robotmap.h++"
@@ -30,8 +32,11 @@ typedef enum
     FS_INI_WAIT = 1,                              //!< wait for a message on InitProc topic
     FS_INI_SEARCH,                                //!< search for a robot
     FS_INI_SEARCH_LOCK,                           //!< lock on possible robot
-    FS_INI_SIGNAL,                                //!< send out a signal
+    FS_INI_SIGNAL_START,                          //!< send out a signal
+    FS_INI_SIGNAL_RESTORE,                        //!< restore state changes caused by signal
+    FS_INI_SIGNAL,                                //!< wait until finished signal
     FS_INI_WATCH,                                 //!< watch for a signal
+    FS_INI_FOUND,                                 //!< found a robot
   } FormationState;
 
 /*! \class SwarmBot
@@ -62,6 +67,14 @@ private:
   ArRobot *robot;                                 //!< aria client
   ArRobotConnector *connector;                    //!< robot connector
   ArLaserConnector *laserConnector;               //!< connector for laser range finder
+  
+  
+  /*! \brief Publishes to InitProc.
+    Publishes a message to the InitProc topic.
+    All posible fields are initialized with current member values.
+    \param TargetID Static id of target robot, if any.
+  */
+  void PublishInitProc(int32_t TargetID);
   
 public:
   /*!

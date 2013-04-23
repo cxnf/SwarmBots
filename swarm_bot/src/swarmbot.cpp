@@ -5,6 +5,7 @@ SwarmBot::SwarmBot() : isRunning(false),
 		       name(),
 		       staticID(0),
 		       fstate(FS_INI_WAIT),
+		       activeRobot(0),
 		       robotMap(),
 		       finder(),
 		       node(),
@@ -44,7 +45,7 @@ int SwarmBot::Setup()
   // --------------- Aria Setup --------------------------------------------------------------------
   std::string port;
   ppnode.param<std::string>("port", port, "/dev/ttyUSB0");
-  printf("Connection using: [%s]\n", port.c_str());
+  PRINT(BLUE "Connection using: [%s]", port.c_str());
   ArArgumentBuilder *arg = new ArArgumentBuilder();
   size_t split = port.find(":");
   if (split != std::string::npos)
@@ -111,7 +112,7 @@ void SwarmBot::Run()
   ros::Rate rate(10);
   int second = 0;
   
-  printf("\n\033[22;32mI am [%s] assigned to [%d].\n", this->name.c_str(), this->staticID);
+  PRINT(GREEN "I am [%s] assigned to [%d]", this->name.c_str(), this->staticID);
 
   while (this->isRunning)
     {
@@ -130,6 +131,10 @@ void SwarmBot::Run()
 	{
 	case FS_INI_WAIT: break;
 
+	case FS_INI_FOUND:
+	  this->fstate = FS_INI_WAIT;
+	  break;
+
 	case FS_INI_SEARCH:
 	  {
 	    double a, d;
@@ -139,7 +144,6 @@ void SwarmBot::Run()
 	      {
 		this->robot->setRotVel(0);
 		this->robot->setHeading(p.getTh() + 5);
-		this->finder.LockOn(a);
 		this->fstate = FS_INI_SEARCH_LOCK;
 	      }
 	    else this->robot->setRotVel(10);
@@ -149,19 +153,52 @@ void SwarmBot::Run()
 
 	case FS_INI_SEARCH_LOCK:
 	  {
-	    if (!this->finder.MeasureMedian())
+	    double a, d;
+	    this->robot->lock();
+	    if (this->robot->isHeadingDone())
 	      {
-		this->fstate = FS_INI_WATCH;
-		swarm_bot::InitProc msg;
-		msg.StaticID = this->staticID;
-		msg.FormationState = this->fstate;
-		this->initprocOut.publish(msg);
+		if (!this->finder.MeasureMedian())
+		  {
+		    this->fstate = FS_INI_WATCH;
+		    this->PublishInitProc(0);
+		  }
 	      }
+	    else if (!this->finder.FindClosestRobot(&a, &d))
+		this->finder.LockOn(a);
+	    this->robot->unlock();
 	  }
+	  break;
 
+	case FS_INI_SIGNAL_START:
+	  {
+	    this->robot->lock();
+	    this->robot->setHeading(this->robot->getEncoderPose().getTh() + 180);
+	    this->fstate = FS_INI_SIGNAL_RESTORE;
+	    this->robot->unlock();
+	  }
+	  break;
+
+	case FS_INI_SIGNAL_RESTORE:
+	  {
+	    this->robot->lock();
+	    if (this->robot->isHeadingDone())
+	      {
+		this->robot->setHeading(this->robot->getEncoderPose().getTh() + 180);
+		this->fstate = FS_INI_SIGNAL;
+	      }
+	    this->robot->unlock();
+	  }
+	  break;
+	  
 	case FS_INI_SIGNAL:
 	  {
-
+	    this->robot->lock();
+	    if (this->robot->isHeadingDone())
+	      {
+		this->fstate = FS_INI_WAIT;
+		this->PublishInitProc(this->staticID);
+	      }
+	    this->robot->unlock();
 	  }
 	  break;
 
@@ -171,15 +208,16 @@ void SwarmBot::Run()
 	    if (!this->finder.RangeAt(this->finder.GetAngle(), &d))
 	      {
 		double diff = fabs(this->finder.GetMedian() - d);
-		// printf("Difference [%f]:[%f]\n", this->finder.GetMedian(), d);
-		if (diff > 50)
+		if (diff > 25)
 		  {
-		    printf("I think i am watching: [%d]\n", this->activeRobot);
+		    PRINT(YELLOW "I think i am watching: [%d]", this->activeRobot);
+		    this->fstate = FS_INI_FOUND;
+		    this->PublishInitProc(this->activeRobot);
 		  }
 	      }
 	    else
 	      {
-		printf("Robot ran away!\n");
+		PRINT(RED "Robot ran away!");
 		this->fstate = FS_INI_WAIT;
 	      }
 	  }
@@ -196,10 +234,10 @@ void SwarmBot::Run()
   request.request.Shutdown = true;
   if (!this->announce.call(request))
     {
-      printf("Failed to leave swarm.\n");
+      PRINT(RED "Failed to leave swarm.");
     }
   
-  printf("Good night.\n");
+  PRINT(BLUE "Good night.");
 }
 
 void SwarmBot::Stop()
@@ -207,42 +245,77 @@ void SwarmBot::Stop()
   this->isRunning = false;
 }
 
-// ----------------- Callbacks ---------------------------------------------------------------------
 
+void SwarmBot::PublishInitProc(int32_t TargetID)
+{
+  swarm_bot::InitProc msg;
+  msg.StaticID = this->staticID;
+  msg.FormationState = this->fstate;
+  msg.TargetID = TargetID;
+  this->initprocOut.publish(msg);
+}
+
+// ----------------- Callbacks ---------------------------------------------------------------------
 void SwarmBot::CallbackInitProc(const swarm_bot::InitProc::ConstPtr &msg)
 {
-  if (msg->StaticID)
+  if (!msg->StaticID)
     {
-      if (msg->StaticID == this->staticID)
-	{
+      int p = this->robotMap.GetPriority(this->staticID);
+      if (p == 0)
 	  this->fstate = (FormationState)msg->FormationState;
-	  printf("Now in [%d] mode.\n", this->fstate);
-	}
-      else
-	{
-	  switch (msg->FormationState)
-	    {
-	    case FS_INI_WATCH:
-	      {
-		int p = this->robotMap.GetPriority(msg->StaticID);
-		if (p < 0) break;
-		int sid = this->robotMap.GetStaticID(p + 1);
-		if (sid > 0)
-		  {
-		    this->activeRobot = sid;
-		    if (sid == this->staticID)
-		      {
-			this->fstate = FS_INI_SEARCH;
-		      }
-		  }
-	      }
-	      break;
-	    }
-	}
     }
   else
     {
-      printf("Something went horribly wrong. [%d]\n", msg->StaticID);
+      switch (msg->FormationState)
+	{
+	case FS_INI_WATCH:
+	  {
+	    int sid = this->robotMap.GetNextID(msg->StaticID);
+	    if (sid > 0)
+	      {
+		this->activeRobot = sid;
+		if (sid == this->staticID)
+		    this->fstate = FS_INI_SEARCH;
+	      }
+	    else if (sid == 0)
+	      {
+		int p = this->robotMap.GetPriority(this->staticID);
+		if (p == 0)
+		  {
+		    this->fstate = FS_INI_SIGNAL_START;
+		    this->PublishInitProc(0);
+		    PRINT(YELLOW "Signal out.");
+		  }
+	      }
+	  }
+	  break;
+	  
+	case FS_INI_SIGNAL_START:
+	  this->activeRobot = msg->StaticID;
+	  break;
+
+	case FS_INI_WAIT:
+	  {
+	    PRINT(BLACK "Test 01 [%d][%d][%d]", this->activeRobot, msg->StaticID, msg->TargetID);
+	    if ((this->activeRobot == msg->StaticID) && (msg->StaticID == msg->TargetID))
+	      {
+		PRINT(BLACK "Test 02");
+		int sid = this->robotMap.GetNextID(msg->StaticID);
+		if (sid == this->staticID)
+		  {
+		    this->fstate = FS_INI_SIGNAL_START;
+		    this->PublishInitProc(0);
+		    PRINT(YELLOW "Next Signal out.");
+		  }
+	      }
+	    PRINT(BLACK "Test End");
+	  }
+	  break;
+
+	case FS_INI_FOUND:
+	  // TODO: create graph link, also check if valid first
+	  break;
+	}
     }
 }
 

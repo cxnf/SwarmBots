@@ -46,3 +46,11 @@ int RobotMap::GetStaticID(unsigned int priority)
     return 0;
   return this->priorities[priority];
 }
+
+int RobotMap::GetNextID(int staticID)
+{
+  int p = this->GetPriority(staticID);
+  if (p < 0)
+    return 0;
+  return this->GetStaticID(p + 1);
+}
