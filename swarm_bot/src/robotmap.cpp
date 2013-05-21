@@ -12,7 +12,7 @@ int RobotMap::Add(int staticID)
 {
   if (this->robots.count(staticID))
     return ERR_SWARM_MAP;
-  this->robots[staticID] = Robot(staticID);
+  this->robots[staticID] = new Node(staticID);
   this->priorities.push_back(staticID);
   std::sort(this->priorities.begin(), this->priorities.end());
   return OK_SUCCESS;
@@ -22,7 +22,7 @@ void RobotMap::Heartbeat(int staticID)
 {
   if (this->robots.count(staticID))
     {
-      
+      // TODO: implement heartbeat system
     }
   else this->Add(staticID);
 }
@@ -31,6 +31,30 @@ bool RobotMap::Increment(std::list<int> *lost)
 {
   return false;
 }
+
+
+int RobotMap::Link(int source, int target)
+{
+  if (this->robots.count(source) && this->robots.count(target))
+    {
+      Node *r0 = this->robots[source];
+      Node *r1 = this->robots[target];
+      if (r1->HasChild(r0->GetID()))
+	{
+	  return ERR_SWARM_CYCLE;
+	}
+      else
+	{
+	  r1->Add(r0);
+	  return OK_SUCCESS;
+	}
+    }
+  else
+    {
+      return ERR_FAIL;
+    }
+}
+
 
 int RobotMap::GetPriority(int staticID)
 {
@@ -53,4 +77,13 @@ int RobotMap::GetNextID(int staticID)
   if (p < 0)
     return 0;
   return this->GetStaticID(p + 1);
+}
+
+bool RobotMap::isleader(int id)
+{
+  if (this->robots.count(id))
+    {
+      Node *r = this->robots[id];
+      return r->GetLeader() == 0;
+    }else return false;
 }

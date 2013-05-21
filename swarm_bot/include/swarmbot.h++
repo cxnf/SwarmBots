@@ -3,7 +3,9 @@
 /*! \file swarmbot.h++
   \brief Contains main class.
  */
+#define DEBUG
 #define VERBOSE
+#define CONSOLE_COLOR
 
 // ----------------- Libraries ---------------------------------------------------------------------
 #include <cmath>
@@ -22,6 +24,9 @@
 #include "swarm_bot/InitProc.h"
 #include "swarm_bot/Announce.h"
 
+// ----------------- Defines -----------------------------------------------------------------------
+#define LASER_EPSILON 15
+
 /*! \enum FormationState
   \brief States robot can enter to create/maintain a formation.
   Different states a robot can enter.
@@ -37,6 +42,9 @@ typedef enum
     FS_INI_SIGNAL,                                //!< wait until finished signal
     FS_INI_WATCH,                                 //!< watch for a signal
     FS_INI_FOUND,                                 //!< found a robot
+    
+    FS_RUN_FORWARD,                               //!< leader moves forward
+    FS_RUN_FOLLOW,                                //!< follow leader
   } FormationState;
 
 /*! \class SwarmBot
@@ -51,7 +59,9 @@ private:
   std::string name;                               //!< name of the robot
   int32_t staticID;                               //!< id of the robot
   FormationState fstate;                          //!< current state of the robot
+  FormationState dstate;                          //!< delayed state to swap to
   int activeRobot;                                //!< id of signalling (or searching) robot
+  int stateDelay;                                 //!< delay in msec before state swap
   
   RobotMap robotMap;                              //!< map (and graph if build) of swarm robots
   RangeFinder finder;                             //!< range finder of the robot
@@ -67,14 +77,23 @@ private:
   ArRobot *robot;                                 //!< aria client
   ArRobotConnector *connector;                    //!< robot connector
   ArLaserConnector *laserConnector;               //!< connector for laser range finder
+  ArTime delayTimer;                              //!< timer to delay steps
   
   
-  /*! \brief Publishes to InitProc.
+  /*!
+    \brief Publishes to InitProc.
     Publishes a message to the InitProc topic.
     All posible fields are initialized with current member values.
     \param TargetID Static id of target robot, if any.
   */
   void PublishInitProc(int32_t TargetID);
+  /*!
+    \brief Changes robot state.
+    Updates the robot formation state.
+    \param newState State to change to.
+    \param delay Optional delay before state change takes effect.
+  */
+  void ChangeState(FormationState newState, int delay = 0);
   
 public:
   /*!

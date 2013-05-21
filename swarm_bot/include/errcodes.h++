@@ -21,6 +21,7 @@ enum ErrorCodes
     ERR_SWARM_CONTROLLER,                         //!< swarm controller response invalid
     ERR_SWARM_MAP,                                //!< robot map error
     ERR_SWARM_FINDER,                             //!< range finder error
+    ERR_SWARM_CYCLE,                              //!< loop in graph error
 
     ERR_ROS_SERVICE,                              //!< ros service failed to send response
 

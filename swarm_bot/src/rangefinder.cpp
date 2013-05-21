@@ -1,7 +1,11 @@
 #include "rangefinder.h++"
 
 // ----------------- Constructors ------------------------------------------------------------------
-RangeFinder::RangeFinder() : laser(NULL)
+RangeFinder::RangeFinder() : laser(NULL),
+			     ranges(),
+			     lockonAngle(0),
+			     median(0),
+			     lockon(false)
 {
 }
 
@@ -43,13 +47,20 @@ void RangeFinder::LockOn(double angle)
 {
   this->ResetLockOn();
   this->lockonAngle = angle;
+  this->lockon = true;
 }
 
 void RangeFinder::ResetLockOn()
 {
+  this->lockon = false;
   this->lockonAngle = 0;
   this->median = 0;
   this->ranges.clear();
+}
+
+bool RangeFinder::HasLock()
+{
+  return this->lockon;
 }
 
 int RangeFinder::MeasureMedian()

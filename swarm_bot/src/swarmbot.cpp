@@ -5,7 +5,9 @@ SwarmBot::SwarmBot() : isRunning(false),
 		       name(),
 		       staticID(0),
 		       fstate(FS_INI_WAIT),
+		       dstate(FS_INI_WAIT),
 		       activeRobot(0),
+		       stateDelay(0),
 		       robotMap(),
 		       finder(),
 		       node(),
@@ -17,7 +19,8 @@ SwarmBot::SwarmBot() : isRunning(false),
 		       arguments(NULL),
 		       robot(NULL),
 		       connector(NULL),
-		       laserConnector(NULL)
+		       laserConnector(NULL),
+		       delayTimer()
 {
 }
 
@@ -40,7 +43,7 @@ int SwarmBot::Setup()
 {
   ros::NodeHandle ppnode("~");
   Aria::init();
-  // ArLog::init(ArLog::None, ArLog::Verbose, "", false, false, false);
+  ArLog::init(ArLog::StdOut, ArLog::Terse, "", false, false, false);
 
   // --------------- Aria Setup --------------------------------------------------------------------
   std::string port;
@@ -111,6 +114,7 @@ void SwarmBot::Run()
 {
   ros::Rate rate(10);
   int second = 0;
+  double angleBuffer = 0;
   
   PRINT(GREEN "I am [%s] assigned to [%d]", this->name.c_str(), this->staticID);
 
@@ -125,6 +129,14 @@ void SwarmBot::Run()
 	  pulse.StaticID = this->staticID;
 	  this->heartbeatOut.publish(pulse);
 	}
+      
+      // ----------- Delay -------------------------------------------------------------------------
+      if (this->stateDelay > 0)
+	{
+	  if (this->delayTimer.mSecSince() > this->stateDelay)
+	    this->fstate = this->dstate;
+	  else this->fstate = FS_INI_WAIT;
+	}
 
       // ----------- Formation ---------------------------------------------------------------------
       switch (this->fstate)
@@ -132,7 +144,7 @@ void SwarmBot::Run()
 	case FS_INI_WAIT: break;
 
 	case FS_INI_FOUND:
-	  this->fstate = FS_INI_WAIT;
+	  this->ChangeState(FS_INI_WAIT);
 	  break;
 
 	case FS_INI_SEARCH:
@@ -143,8 +155,11 @@ void SwarmBot::Run()
 	    if (!this->finder.FindClosestRobot(&a, &d))
 	      {
 		this->robot->setRotVel(0);
-		this->robot->setHeading(p.getTh() + 5);
-		this->fstate = FS_INI_SEARCH_LOCK;
+		if (a < -89)
+		  this->robot->setHeading(p.getTh() - 5);
+		if (a > 89)
+		  this->robot->setHeading(p.getTh() + 5);
+		this->ChangeState(FS_INI_SEARCH_LOCK);
 	      }
 	    else this->robot->setRotVel(10);
 	    this->robot->unlock();
@@ -157,14 +172,21 @@ void SwarmBot::Run()
 	    this->robot->lock();
 	    if (this->robot->isHeadingDone())
 	      {
-		if (!this->finder.MeasureMedian())
+		if (this->finder.HasLock())
 		  {
-		    this->fstate = FS_INI_WATCH;
-		    this->PublishInitProc(0);
+		    if (!this->finder.MeasureMedian())
+		      {
+			this->ChangeState(FS_INI_WATCH);
+			this->PublishInitProc(0);
+		      }
+		  }
+		else if (!this->finder.FindClosestRobot(&a, &d))
+		    this->finder.LockOn(a);
+		else
+		  {
+		    PRINT(RED "Lock failure.");
 		  }
 	      }
-	    else if (!this->finder.FindClosestRobot(&a, &d))
-		this->finder.LockOn(a);
 	    this->robot->unlock();
 	  }
 	  break;
@@ -172,8 +194,9 @@ void SwarmBot::Run()
 	case FS_INI_SIGNAL_START:
 	  {
 	    this->robot->lock();
+	    angleBuffer = this->robot->getEncoderPose().getTh();
 	    this->robot->setHeading(this->robot->getEncoderPose().getTh() + 180);
-	    this->fstate = FS_INI_SIGNAL_RESTORE;
+	    this->ChangeState(FS_INI_SIGNAL_RESTORE);
 	    this->robot->unlock();
 	  }
 	  break;
@@ -183,8 +206,8 @@ void SwarmBot::Run()
 	    this->robot->lock();
 	    if (this->robot->isHeadingDone())
 	      {
-		this->robot->setHeading(this->robot->getEncoderPose().getTh() + 180);
-		this->fstate = FS_INI_SIGNAL;
+		this->robot->setHeading(angleBuffer);
+		this->ChangeState(FS_INI_SIGNAL);
 	      }
 	    this->robot->unlock();
 	  }
@@ -195,8 +218,13 @@ void SwarmBot::Run()
 	    this->robot->lock();
 	    if (this->robot->isHeadingDone())
 	      {
-		this->fstate = FS_INI_WAIT;
-		this->PublishInitProc(this->staticID);
+		double diff = fabs(this->robot->getEncoderPose().getTh() - angleBuffer);
+		if (diff < 0.1)
+		  {
+		    this->PublishInitProc(this->staticID);
+		    this->ChangeState(this->finder.HasLock() ? FS_INI_WATCH : FS_INI_WAIT);
+		  }
+		else this->robot->setHeading(angleBuffer);
 	      }
 	    this->robot->unlock();
 	  }
@@ -208,18 +236,32 @@ void SwarmBot::Run()
 	    if (!this->finder.RangeAt(this->finder.GetAngle(), &d))
 	      {
 		double diff = fabs(this->finder.GetMedian() - d);
-		if (diff > 25)
+
+		if (diff > LASER_EPSILON)
 		  {
 		    PRINT(YELLOW "I think i am watching: [%d]", this->activeRobot);
-		    this->fstate = FS_INI_FOUND;
+		    this->finder.ResetLockOn();
+		    this->ChangeState(FS_INI_FOUND);
 		    this->PublishInitProc(this->activeRobot);
 		  }
 	      }
 	    else
 	      {
 		PRINT(RED "Robot ran away!");
-		this->fstate = FS_INI_WAIT;
+		this->ChangeState(FS_INI_WAIT);
 	      }
+	  }
+	  break;
+
+	case FS_RUN_FOLLOW:
+	  break;
+	case FS_RUN_FORWARD:
+	  {
+	    this->robot->lock();
+	    if (this->robot->isMoveDone())
+	      this->robot->setVel2(100, 100);
+	      // this->robot->move(1000);
+	    this->robot->unlock();
 	  }
 	  break;
 	}
@@ -250,9 +292,19 @@ void SwarmBot::PublishInitProc(int32_t TargetID)
 {
   swarm_bot::InitProc msg;
   msg.StaticID = this->staticID;
-  msg.FormationState = this->fstate;
+  msg.FormationState = this->dstate;
   msg.TargetID = TargetID;
   this->initprocOut.publish(msg);
+}
+
+void SwarmBot::ChangeState(FormationState newState, int delay)
+{
+  this->stateDelay = delay;
+  this->dstate = newState;
+  this->delayTimer.setToNow();
+  if (delay == 0)
+    this->fstate = newState;
+  //  PRINT(GREEN "State swap: [%d]", newState);
 }
 
 // ----------------- Callbacks ---------------------------------------------------------------------
@@ -262,7 +314,7 @@ void SwarmBot::CallbackInitProc(const swarm_bot::InitProc::ConstPtr &msg)
     {
       int p = this->robotMap.GetPriority(this->staticID);
       if (p == 0)
-	  this->fstate = (FormationState)msg->FormationState;
+	this->ChangeState((FormationState)msg->FormationState);
     }
   else
     {
@@ -275,16 +327,15 @@ void SwarmBot::CallbackInitProc(const swarm_bot::InitProc::ConstPtr &msg)
 	      {
 		this->activeRobot = sid;
 		if (sid == this->staticID)
-		    this->fstate = FS_INI_SEARCH;
+		  this->ChangeState(FS_INI_SEARCH);
 	      }
 	    else if (sid == 0)
 	      {
 		int p = this->robotMap.GetPriority(this->staticID);
 		if (p == 0)
 		  {
-		    this->fstate = FS_INI_SIGNAL_START;
+		    this->ChangeState(FS_INI_SIGNAL_START, 2500);
 		    this->PublishInitProc(0);
-		    PRINT(YELLOW "Signal out.");
 		  }
 	      }
 	  }
@@ -294,26 +345,31 @@ void SwarmBot::CallbackInitProc(const swarm_bot::InitProc::ConstPtr &msg)
 	  this->activeRobot = msg->StaticID;
 	  break;
 
-	case FS_INI_WAIT:
+	case FS_INI_SIGNAL:
 	  {
-	    PRINT(BLACK "Test 01 [%d][%d][%d]", this->activeRobot, msg->StaticID, msg->TargetID);
-	    if ((this->activeRobot == msg->StaticID) && (msg->StaticID == msg->TargetID))
+	    int sid = this->robotMap.GetNextID(msg->StaticID);
+	    if ((this->activeRobot == msg->StaticID) && (msg->StaticID == msg->TargetID) && (sid == this->staticID))
 	      {
-		PRINT(BLACK "Test 02");
-		int sid = this->robotMap.GetNextID(msg->StaticID);
-		if (sid == this->staticID)
-		  {
-		    this->fstate = FS_INI_SIGNAL_START;
-		    this->PublishInitProc(0);
-		    PRINT(YELLOW "Next Signal out.");
-		  }
+		this->ChangeState(FS_INI_SIGNAL_START, 2500);
+		this->PublishInitProc(0);
 	      }
-	    PRINT(BLACK "Test End");
+	    else if (sid == 0)
+	      {
+		// int p = this->robotMap.GetPriority(this->staticID);
+		// if (p == 0)
+		// {
+		    if (this->robotMap.isleader(this->staticID))
+		      {
+			this->ChangeState(FS_RUN_FORWARD);
+			this->PublishInitProc(0);
+		      }
+		    // }
+	      }
 	  }
 	  break;
 
 	case FS_INI_FOUND:
-	  // TODO: create graph link, also check if valid first
+	  this->robotMap.Link(msg->StaticID, msg->TargetID);
 	  break;
 	}
     }
