@@ -78,4 +78,15 @@ public:
     \return Id of next robot or 0 if given robot is last.
   */
   int GetNextID(int staticID);
+
+  /*! \brief Gets id of leader.
+    Returns the id of the leader.
+    \return Id of leader, or 0 if none found.
+  */
+  int GetLeader();
+  /*! \brief Gets whether graph has multiple roots.
+    Returns a value indicating the graph has more than one root node.
+    \return More than one root.
+  */
+  bool HasMultipleLeaders();
 };

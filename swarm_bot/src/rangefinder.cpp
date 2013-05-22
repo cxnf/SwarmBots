@@ -128,3 +128,18 @@ int RangeFinder::RangeAt(double angle, double *distance)
     return ERR_FAIL;
   return OK_SUCCESS;
 }
+
+
+void RangeFinder::PrintScan()
+{
+  this->laser->lockDevice();
+  std::list<ArPoseWithTime*> *buffer = this->laser->getCurrentBuffer();
+  ArPose p = this->laser->getRobot()->getEncoderPose();
+  for (std::list<ArPoseWithTime*>::iterator it = buffer->begin(); it != buffer->end(); ++it)
+    {
+      double a = p.findAngleTo(**it);
+      double d = p.findDistanceTo(**it);
+      PRINT(BLACK "Scan [%f][%f]", a, d);
+    }
+  PRINT(RED "----------------------------------------");
+}

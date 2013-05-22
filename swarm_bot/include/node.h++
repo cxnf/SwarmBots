@@ -3,9 +3,14 @@
 /*! \file node.h++
   \brief Node in robot graph.
 */
+#define DEBUG
+#define VERBOSE
+#define CONSOLE_COLOR
 
 #include <algorithm>
 #include <list>
+
+#include "assist.h++"
 #include "errcodes.h++"
 
 

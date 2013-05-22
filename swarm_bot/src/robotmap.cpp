@@ -32,7 +32,6 @@ bool RobotMap::Increment(std::list<int> *lost)
   return false;
 }
 
-
 int RobotMap::Link(int source, int target)
 {
   if (this->robots.count(source) && this->robots.count(target))
@@ -45,6 +44,14 @@ int RobotMap::Link(int source, int target)
 	}
       else
 	{
+	  Node *l = r1->GetLeader();
+	  if (l)
+	    {
+	      if (l->GetID() == source)
+		{
+		  return ERR_SWARM_CYCLE;
+		}
+	    }
 	  r1->Add(r0);
 	  return OK_SUCCESS;
 	}
@@ -54,7 +61,6 @@ int RobotMap::Link(int source, int target)
       return ERR_FAIL;
     }
 }
-
 
 int RobotMap::GetPriority(int staticID)
 {
@@ -86,4 +92,25 @@ bool RobotMap::isleader(int id)
       Node *r = this->robots[id];
       return r->GetLeader() == 0;
     }else return false;
+}
+
+int RobotMap::GetLeader()
+{
+  for (std::map<int, Node*>::iterator it = this->robots.begin(); it != this->robots.end(); ++it)
+    {
+      if (!it->second->GetLeader())
+	return it->second->GetID();
+    }
+  return 0;
+}
+
+bool RobotMap::HasMultipleLeaders()
+{
+  int count = 0;
+  for (std::map<int, Node*>::iterator it = this->robots.begin(); it != this->robots.end(); ++it)
+    {
+      if (!it->second->GetLeader())
+	  count++;
+    }
+  return count > 1;
 }

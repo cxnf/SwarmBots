@@ -236,10 +236,8 @@ void SwarmBot::Run()
 	    if (!this->finder.RangeAt(this->finder.GetAngle(), &d))
 	      {
 		double diff = fabs(this->finder.GetMedian() - d);
-
 		if (diff > LASER_EPSILON)
 		  {
-		    PRINT(YELLOW "I think i am watching: [%d]", this->activeRobot);
 		    this->finder.ResetLockOn();
 		    this->ChangeState(FS_INI_FOUND);
 		    this->PublishInitProc(this->activeRobot);
@@ -254,15 +252,15 @@ void SwarmBot::Run()
 	  break;
 
 	case FS_RUN_FOLLOW:
-	  break;
+	  // break;
 	case FS_RUN_FORWARD:
-	  {
+	  this->finder.PrintScan();
+	  /*{
 	    this->robot->lock();
 	    if (this->robot->isMoveDone())
 	      this->robot->setVel2(100, 100);
-	      // this->robot->move(1000);
 	    this->robot->unlock();
-	  }
+	  }*/
 	  break;
 	}
 
@@ -287,7 +285,6 @@ void SwarmBot::Stop()
   this->isRunning = false;
 }
 
-
 void SwarmBot::PublishInitProc(int32_t TargetID)
 {
   swarm_bot::InitProc msg;
@@ -304,7 +301,6 @@ void SwarmBot::ChangeState(FormationState newState, int delay)
   this->delayTimer.setToNow();
   if (delay == 0)
     this->fstate = newState;
-  //  PRINT(GREEN "State swap: [%d]", newState);
 }
 
 // ----------------- Callbacks ---------------------------------------------------------------------
@@ -355,21 +351,32 @@ void SwarmBot::CallbackInitProc(const swarm_bot::InitProc::ConstPtr &msg)
 	      }
 	    else if (sid == 0)
 	      {
-		// int p = this->robotMap.GetPriority(this->staticID);
-		// if (p == 0)
+		// ---------------------------------------------------------------------------------
+		if (this->robotMap.HasMultipleLeaders())
+		  {
+		    // TODO: merge trees
+		  }
+		if (this->robotMap.GetLeader() == this->staticID)
+		  {
+		    this->ChangeState(FS_RUN_FORWARD);
+		    this->PublishInitProc(0);
+		  }
+
+		// if (this->robotMap.isleader(this->staticID))
 		// {
-		    if (this->robotMap.isleader(this->staticID))
-		      {
-			this->ChangeState(FS_RUN_FORWARD);
-			this->PublishInitProc(0);
-		      }
-		    // }
+		// this->ChangeState(FS_RUN_FORWARD);
+		// this->PublishInitProc(0);
+		// }
+		// ---------------------------------------------------------------------------------
 	      }
 	  }
 	  break;
 
 	case FS_INI_FOUND:
-	  this->robotMap.Link(msg->StaticID, msg->TargetID);
+	  {
+	    int r = this->robotMap.Link(msg->StaticID, msg->TargetID);
+	    PRINT(YELLOW "Link [%d]->[%d] [%d]", msg->StaticID, msg->TargetID, r);
+	  }
 	  break;
 	}
     }

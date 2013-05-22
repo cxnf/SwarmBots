@@ -26,7 +26,10 @@ Node* Node::GetLeader()
 void Node::Add(Node *n)
 {
   this->followers.push_back(n);
-  n->leader = this;
+  if (!n->leader)
+    {
+      n->leader = this;
+    }
 }
 
 bool Node::HasChild(int id, std::list<int> *l)
@@ -42,16 +45,19 @@ bool Node::HasChild(int id, std::list<int> *l)
     {
       for (std::list<Node*>::iterator it = this->followers.begin(); it != this->followers.end(); ++it)
 	{
-	  std::list<int>::iterator p = std::find(l->begin(), l->end(), (*it)->id);
-	  if (p == l->end())
+	  if ((*it)->id == id)
 	    {
 	      return true;
 	    }
 	  else
 	    {
-	      l->push_back((*it)->id);
-	      if ((*it)->HasChild((*it)->id, l))
-		return true;
+	      std::list<int>::iterator p = std::find(l->begin(), l->end(), (*it)->id);
+	      // if (p == l->end())
+	      // {
+		  l->push_back((*it)->id);
+		  if ((*it)->HasChild((*it)->id, l))
+		    return true;
+		  // }
 	    }
 	}
       return false;
