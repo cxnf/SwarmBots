@@ -32,7 +32,13 @@ rosbuild_gensrv()
 
 include_directories(/usr/local/Aria/include)
 
-#rosbuild_add_library(robot src/robot.cpp src/vector3f.cpp src/formation.cpp)
-#rosbuild_add_executable(swarm_bot src/swarm_bot.cpp src/robot.cpp src/vector3f.cpp src/formation.cpp src/AriaInterface.cpp)
-rosbuild_add_executable(swarm_bot src/main.cpp src/swarmbot.cpp src/rangefinder.cpp src/robotmap.cpp src/node.cpp)
-target_link_libraries(swarm_bot -lboost_regex /usr/local/Aria/lib/libAria.so /usr/local/Aria/lib/libArNetworking.so)
+rosbuild_add_executable(swarm_bot
+  src/main.cpp
+  src/swarmbot.cpp
+  src/rangefinder.cpp
+  src/robotmap.cpp
+  src/node.cpp)
+target_link_libraries(swarm_bot
+  -lboost_regex
+  /usr/local/Aria/lib/libAria.so
+  /usr/local/Aria/lib/libArNetworking.so)

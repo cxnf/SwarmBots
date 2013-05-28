@@ -26,7 +26,14 @@ private:
   std::list<Node*> followers;                     //<! pointers to robots following this one, if any
 
 public:
+  /*! \brief Default constructor.
+    Default constructor, causes id to be invalid.
+  */
   Node();
+  /*! \brief Creates node for a robot.
+    Initializes node with given robot id.
+    \param id Id of robot.
+  */
   Node(int id);
 
   /*! \brief Returns id.

@@ -80,15 +80,13 @@ private:
   ArTime delayTimer;                              //!< timer to delay steps
   
   
-  /*!
-    \brief Publishes to InitProc.
+  /*! \brief Publishes to InitProc.
     Publishes a message to the InitProc topic.
     All posible fields are initialized with current member values.
     \param TargetID Static id of target robot, if any.
   */
   void PublishInitProc(int32_t TargetID);
-  /*!
-    \brief Changes robot state.
+  /*! \brief Changes robot state.
     Updates the robot formation state.
     \param newState State to change to.
     \param delay Optional delay before state change takes effect.
@@ -96,47 +94,40 @@ private:
   void ChangeState(FormationState newState, int delay = 0);
   
 public:
-  /*!
-    \brief Initializes fields.
+  /*! \brief Initializes fields.
     Initializes all fields.
     Pointers are set to NULL.
   */
   SwarmBot();
-  /*!
-    \brief Stop Aria and clean up.
+  /*! \brief Stop Aria and clean up.
     Stops the robot and shuts down Aria.
     All allocated data is deallocated.
   */
   ~SwarmBot();
   
-  /*!
-    \brief Starts up the robot.
+  /*! \brief Starts up the robot.
     Creates all objects required.
     Connecters are connected.
     \return OK_SUCCESS or an error code.
   */
   int Setup();
-  /*!
-    \brief Runs the main loop.
+  /*! \brief Runs the main loop.
     Starts the main loop on calling thread.
     This method blocks until SwarmBot::Stop is called.
   */
   void Run();
-  /*!
-    \brief Stops the main loop.
+  /*! \brief Stops the main loop.
     Stops the main loop.
     The main loop will finish its current iteration.
   */
   void Stop();
   
-  /*!
-    \brief InitProc callback.
+  /*! \brief InitProc callback.
     Processes messages from the initproc topic.
     \param msg Received message.
   */
   void CallbackInitProc(const swarm_bot::InitProc::ConstPtr &msg);
-  /*!
-    \brief Heartbeat callback.
+  /*! \brief Heartbeat callback.
     Maintains swarm list for a robot.
     \param msg Received message.
   */

@@ -39,27 +39,19 @@ int RobotMap::Link(int source, int target)
       Node *r0 = this->robots[source];
       Node *r1 = this->robots[target];
       if (r1->HasChild(r0->GetID()))
-	{
-	  return ERR_SWARM_CYCLE;
-	}
+	return ERR_SWARM_CYCLE;
       else
 	{
 	  Node *l = r1->GetLeader();
 	  if (l)
-	    {
-	      if (l->GetID() == source)
-		{
-		  return ERR_SWARM_CYCLE;
-		}
-	    }
+	    if (l->GetID() == source)
+	      return ERR_SWARM_CYCLE;
 	  r1->Add(r0);
 	  return OK_SUCCESS;
 	}
     }
   else
-    {
-      return ERR_FAIL;
-    }
+    return ERR_FAIL;
 }
 
 int RobotMap::GetPriority(int staticID)
@@ -91,16 +83,15 @@ bool RobotMap::isleader(int id)
     {
       Node *r = this->robots[id];
       return r->GetLeader() == 0;
-    }else return false;
+    }
+  else return false;
 }
 
 int RobotMap::GetLeader()
 {
   for (std::map<int, Node*>::iterator it = this->robots.begin(); it != this->robots.end(); ++it)
-    {
-      if (!it->second->GetLeader())
-	return it->second->GetID();
-    }
+    if (!it->second->GetLeader())
+      return it->second->GetID();
   return 0;
 }
 
@@ -108,9 +99,7 @@ bool RobotMap::HasMultipleLeaders()
 {
   int count = 0;
   for (std::map<int, Node*>::iterator it = this->robots.begin(); it != this->robots.end(); ++it)
-    {
-      if (!it->second->GetLeader())
-	  count++;
-    }
+    if (!it->second->GetLeader())
+      count++;
   return count > 1;
 }

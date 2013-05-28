@@ -95,6 +95,8 @@ public:
     \return OK_SUCCESS, ERR_FAIL or an error code.
   */
   int RangeAt(double angle, double *distance);
-  
+
+
+  /*Test method*/
   void PrintScan();
 };

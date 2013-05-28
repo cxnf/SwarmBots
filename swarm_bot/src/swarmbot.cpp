@@ -32,10 +32,14 @@ SwarmBot::~SwarmBot()
   this->robot->waitForRunExit();
   Aria::shutdown();
   
-  if (arguments) delete arguments;
-  if (robot) delete robot;
-  if (connector) delete connector;
-  if (laserConnector) delete laserConnector;
+  if (arguments)
+    delete arguments;
+  if (robot)
+    delete robot;
+  if (connector)
+    delete connector;
+  if (laserConnector)
+    delete laserConnector;
 }
 
 // ----------------- Methods -----------------------------------------------------------------------
@@ -181,11 +185,8 @@ void SwarmBot::Run()
 		      }
 		  }
 		else if (!this->finder.FindClosestRobot(&a, &d))
-		    this->finder.LockOn(a);
-		else
-		  {
-		    PRINT(RED "Lock failure.");
-		  }
+		  this->finder.LockOn(a);
+		else PRINT(RED "Lock failure.");
 	      }
 	    this->robot->unlock();
 	  }
@@ -258,9 +259,9 @@ void SwarmBot::Run()
 	  /*{
 	    this->robot->lock();
 	    if (this->robot->isMoveDone())
-	      this->robot->setVel2(100, 100);
+	    this->robot->setVel2(100, 100);
 	    this->robot->unlock();
-	  }*/
+	    }*/
 	  break;
 	}
 
@@ -273,10 +274,7 @@ void SwarmBot::Run()
   request.request.Name = this->name.c_str();
   request.request.Shutdown = true;
   if (!this->announce.call(request))
-    {
-      PRINT(RED "Failed to leave swarm.");
-    }
-  
+    PRINT(RED "Failed to leave swarm.");
   PRINT(BLUE "Good night.");
 }
 
@@ -360,23 +358,15 @@ void SwarmBot::CallbackInitProc(const swarm_bot::InitProc::ConstPtr &msg)
 		  {
 		    this->ChangeState(FS_RUN_FORWARD);
 		    this->PublishInitProc(0);
+		    PRINT(YELLOW "I'm leading!");
 		  }
-
-		// if (this->robotMap.isleader(this->staticID))
-		// {
-		// this->ChangeState(FS_RUN_FORWARD);
-		// this->PublishInitProc(0);
-		// }
-		// ---------------------------------------------------------------------------------
 	      }
 	  }
 	  break;
 
 	case FS_INI_FOUND:
-	  {
-	    int r = this->robotMap.Link(msg->StaticID, msg->TargetID);
-	    PRINT(YELLOW "Link [%d]->[%d] [%d]", msg->StaticID, msg->TargetID, r);
-	  }
+	  int r = this->robotMap.Link(msg->StaticID, msg->TargetID);
+	  PRINT(YELLOW "Link [%d]->[%d] [%d]", msg->StaticID, msg->TargetID, r);
 	  break;
 	}
     }
