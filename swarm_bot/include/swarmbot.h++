@@ -2,7 +2,7 @@
 
 /*! \file swarmbot.h++
   \brief Contains main class.
- */
+*/
 #define DEBUG
 #define VERBOSE
 #define CONSOLE_COLOR
