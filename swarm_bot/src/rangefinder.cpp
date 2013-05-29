@@ -27,7 +27,9 @@ int RangeFinder::Setup(ArRobot *robot)
     }
   robot->unlock();
   if (!this->laser)
-    return ERR_ARIA_LASER;
+    {
+      return ERR_ARIA_LASER;
+    }
   
   return OK_SUCCESS;
 }
@@ -100,7 +102,9 @@ int RangeFinder::FindClosestRobot(double *angle, double *distance)
   this->laser->unlockDevice();
 
   if (*distance >= this->laser->getMaxRange())
-    return ERR_FAIL;
+    {
+      return ERR_FAIL;
+    }
   return OK_SUCCESS;
 }
 
@@ -125,7 +129,9 @@ int RangeFinder::RangeAt(double angle, double *distance)
   this->laser->unlockDevice();
 
   if (*distance >= this->laser->getMaxRange())
-    return ERR_FAIL;
+    {
+      return ERR_FAIL;
+    }
   return OK_SUCCESS;
 }
 
@@ -142,4 +148,5 @@ void RangeFinder::PrintScan()
       PRINT(BLACK "Scan [%f][%f]", a, d);
     }
   PRINT(RED "----------------------------------------");
+  this->laser->unlockDevice();
 }

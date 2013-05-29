@@ -42,7 +42,7 @@
 #endif
 
 #if defined(DEBUG) || defined(VERBOSE)
-#define PRINT(...) printf(__VA_ARGS__); printf(COLOR_RESET "\n");
+#define PRINT(...) { printf(__VA_ARGS__); printf(COLOR_RESET "\n"); }
 #else
-#define PRINT(...)
+#define PRINT(...) { }
 #endif

@@ -32,14 +32,10 @@ SwarmBot::~SwarmBot()
   this->robot->waitForRunExit();
   Aria::shutdown();
   
-  if (arguments)
-    delete arguments;
-  if (robot)
-    delete robot;
-  if (connector)
-    delete connector;
-  if (laserConnector)
-    delete laserConnector;
+  if (arguments) delete arguments;
+  if (robot) delete robot;
+  if (connector) delete connector;
+  if (laserConnector) delete laserConnector;
 }
 
 // ----------------- Methods -----------------------------------------------------------------------
@@ -75,9 +71,13 @@ int SwarmBot::Setup()
   this->laserConnector = new ArLaserConnector(this->arguments, this->robot, this->connector, true);
 
   if (!this->connector->connectRobot(this->robot))
-    return ERR_ARIA_CONNECTION;
+    {
+      return ERR_ARIA_CONNECTION;
+    }
   if (!this->laserConnector->connectLasers())
-    return ERR_ARIA_LASER;
+    {
+      return ERR_ARIA_LASER;
+    }
   
   this->robot->enableMotors();
   this->robot->runAsync(true);
@@ -99,16 +99,22 @@ int SwarmBot::Setup()
   if (this->announce.call(request))
     {
       if (request.response.StaticID <= 0)
-	return ERR_SWARM_CONTROLLER;
+	{
+	  return ERR_SWARM_CONTROLLER;
+	}
       this->staticID = request.response.StaticID;
     }
   else return ERR_ROS_SERVICE;
 
   // --------------- SwarmBot setup ----------------------------------------------------------------
   if (this->robotMap.Add(this->staticID))
-    return ERR_SWARM_MAP;
+    {
+      return ERR_SWARM_MAP;
+    }
   if (this->finder.Setup(this->robot))
-    return ERR_SWARM_FINDER;
+    {
+      return ERR_SWARM_FINDER;
+    }
 
   this->isRunning = true;
   return OK_SUCCESS;
@@ -138,8 +144,12 @@ void SwarmBot::Run()
       if (this->stateDelay > 0)
 	{
 	  if (this->delayTimer.mSecSince() > this->stateDelay)
-	    this->fstate = this->dstate;
-	  else this->fstate = FS_INI_WAIT;
+	    {
+	      this->fstate = this->dstate;
+	    } else
+	    {
+	      this->fstate = FS_INI_WAIT;
+	    }
 	}
 
       // ----------- Formation ---------------------------------------------------------------------
@@ -148,9 +158,11 @@ void SwarmBot::Run()
 	case FS_INI_WAIT: break;
 
 	case FS_INI_FOUND:
-	  this->ChangeState(FS_INI_WAIT);
+	  {
+	    this->ChangeState(FS_INI_WAIT);
+	  }
 	  break;
-
+	  
 	case FS_INI_SEARCH:
 	  {
 	    double a, d;
@@ -160,12 +172,18 @@ void SwarmBot::Run()
 	      {
 		this->robot->setRotVel(0);
 		if (a < -89)
-		  this->robot->setHeading(p.getTh() - 5);
+		  {
+		    this->robot->setHeading(p.getTh() - 5);
+		  }
 		if (a > 89)
-		  this->robot->setHeading(p.getTh() + 5);
+		  {
+		    this->robot->setHeading(p.getTh() + 5);
+		  }
 		this->ChangeState(FS_INI_SEARCH_LOCK);
+	      } else
+	      {
+		this->robot->setRotVel(10);
 	      }
-	    else this->robot->setRotVel(10);
 	    this->robot->unlock();
 	  }
 	  break;
@@ -183,10 +201,13 @@ void SwarmBot::Run()
 			this->ChangeState(FS_INI_WATCH);
 			this->PublishInitProc(0);
 		      }
+		  } else if (!this->finder.FindClosestRobot(&a, &d))
+		  {
+		    this->finder.LockOn(a);
+		  } else
+		  {
+		    PRINT(RED "Lock failure.");
 		  }
-		else if (!this->finder.FindClosestRobot(&a, &d))
-		  this->finder.LockOn(a);
-		else PRINT(RED "Lock failure.");
 	      }
 	    this->robot->unlock();
 	  }
@@ -224,8 +245,10 @@ void SwarmBot::Run()
 		  {
 		    this->PublishInitProc(this->staticID);
 		    this->ChangeState(this->finder.HasLock() ? FS_INI_WATCH : FS_INI_WAIT);
+		  } else
+		  {
+		    this->robot->setHeading(angleBuffer);
 		  }
-		else this->robot->setHeading(angleBuffer);
 	      }
 	    this->robot->unlock();
 	  }
@@ -243,8 +266,7 @@ void SwarmBot::Run()
 		    this->ChangeState(FS_INI_FOUND);
 		    this->PublishInitProc(this->activeRobot);
 		  }
-	      }
-	    else
+	      } else
 	      {
 		PRINT(RED "Robot ran away!");
 		this->ChangeState(FS_INI_WAIT);
@@ -274,7 +296,9 @@ void SwarmBot::Run()
   request.request.Name = this->name.c_str();
   request.request.Shutdown = true;
   if (!this->announce.call(request))
-    PRINT(RED "Failed to leave swarm.");
+    {
+      PRINT(RED "Failed to leave swarm.");
+    }
   PRINT(BLUE "Good night.");
 }
 
@@ -298,7 +322,9 @@ void SwarmBot::ChangeState(FormationState newState, int delay)
   this->dstate = newState;
   this->delayTimer.setToNow();
   if (delay == 0)
-    this->fstate = newState;
+    {
+      this->fstate = newState;
+    }
 }
 
 // ----------------- Callbacks ---------------------------------------------------------------------
@@ -308,7 +334,9 @@ void SwarmBot::CallbackInitProc(const swarm_bot::InitProc::ConstPtr &msg)
     {
       int p = this->robotMap.GetPriority(this->staticID);
       if (p == 0)
-	this->ChangeState((FormationState)msg->FormationState);
+	{
+	  this->ChangeState((FormationState)msg->FormationState);
+	}
     }
   else
     {
@@ -321,9 +349,10 @@ void SwarmBot::CallbackInitProc(const swarm_bot::InitProc::ConstPtr &msg)
 	      {
 		this->activeRobot = sid;
 		if (sid == this->staticID)
-		  this->ChangeState(FS_INI_SEARCH);
-	      }
-	    else if (sid == 0)
+		  {
+		    this->ChangeState(FS_INI_SEARCH);
+		  }
+	      } else if (sid == 0)
 	      {
 		int p = this->robotMap.GetPriority(this->staticID);
 		if (p == 0)
@@ -336,7 +365,9 @@ void SwarmBot::CallbackInitProc(const swarm_bot::InitProc::ConstPtr &msg)
 	  break;
 	  
 	case FS_INI_SIGNAL_START:
-	  this->activeRobot = msg->StaticID;
+	  {
+	    this->activeRobot = msg->StaticID;
+	  }
 	  break;
 
 	case FS_INI_SIGNAL:
@@ -346,8 +377,7 @@ void SwarmBot::CallbackInitProc(const swarm_bot::InitProc::ConstPtr &msg)
 	      {
 		this->ChangeState(FS_INI_SIGNAL_START, 2500);
 		this->PublishInitProc(0);
-	      }
-	    else if (sid == 0)
+	      } else if (sid == 0)
 	      {
 		// ---------------------------------------------------------------------------------
 		if (this->robotMap.HasMultipleLeaders())
@@ -363,7 +393,7 @@ void SwarmBot::CallbackInitProc(const swarm_bot::InitProc::ConstPtr &msg)
 	      }
 	  }
 	  break;
-
+	  
 	case FS_INI_FOUND:
 	  int r = this->robotMap.Link(msg->StaticID, msg->TargetID);
 	  PRINT(YELLOW "Link [%d]->[%d] [%d]", msg->StaticID, msg->TargetID, r);

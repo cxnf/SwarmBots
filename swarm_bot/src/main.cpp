@@ -19,7 +19,9 @@ int main(int argc, char **argv)
   ros::init(argc, argv, "SwarmBot");
   bot = new SwarmBot;
   if ((ec = bot->Setup()))
-    return ec;
+    {
+      return ec;
+    }
   
   struct sigaction sih;
   sih.sa_handler = HandleSIGINT;
