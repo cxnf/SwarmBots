@@ -12,6 +12,11 @@ Node::Node(int id) : id(id),
 {
 }
 
+// ----------------- Destructors -------------------------------------------------------------------
+Node::~Node()
+{
+}
+
 // ----------------- Methods -----------------------------------------------------------------------
 int Node::GetID()
 {
@@ -23,7 +28,7 @@ Node* Node::GetLeader()
   return this->leader;
 }
 
-void Node::Add(Node *n)
+void Node::AddChild(Node *n)
 {
   this->followers.push_back(n);
   if (!n->leader)

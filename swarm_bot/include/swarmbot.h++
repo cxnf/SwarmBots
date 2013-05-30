@@ -10,6 +10,7 @@
 // ----------------- Libraries ---------------------------------------------------------------------
 #include <cmath>
 #include <string>
+#include <boost/functional/hash.hpp>
 #include "Aria.h"
 #include "ros/ros.h"
 
@@ -57,7 +58,7 @@ class SwarmBot
 private:
   bool isRunning;                                 //!< main loop condition
   std::string name;                               //!< name of the robot
-  int32_t staticID;                               //!< id of the robot
+  int myid;                                       //!< id of the robot
   FormationState fstate;                          //!< current state of the robot
   FormationState dstate;                          //!< delayed state to swap to
   int activeRobot;                                //!< id of signalling (or searching) robot
@@ -83,7 +84,7 @@ private:
   /*! \brief Publishes to InitProc.
     Publishes a message to the InitProc topic.
     All posible fields are initialized with current member values.
-    \param TargetID Static id of target robot, if any.
+    \param TargetID Id of target robot, if any.
   */
   void PublishInitProc(int32_t TargetID);
   /*! \brief Changes robot state.

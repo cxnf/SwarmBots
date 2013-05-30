@@ -3,7 +3,7 @@
 // ----------------- Constructors ------------------------------------------------------------------
 SwarmBot::SwarmBot() : isRunning(false),
 		       name(),
-		       staticID(0),
+		       myid(0),
 		       fstate(FS_INI_WAIT),
 		       dstate(FS_INI_WAIT),
 		       activeRobot(0),
@@ -91,23 +91,28 @@ int SwarmBot::Setup()
   this->heartbeatIn = this->node.subscribe("heartbeat", 32, &SwarmBot::CallbackHeartbeat, this);
   this->initprocOut = this->node.advertise<swarm_bot::InitProc>("initproc", 32);
   this->initprocIn = this->node.subscribe("initproc", 32, &SwarmBot::CallbackInitProc, this);
-  this->announce = this->node.serviceClient<swarm_bot::Announce>("announce");
+  // this->announce = this->node.serviceClient<swarm_bot::Announce>("announce");
   
-  swarm_bot::Announce request;
-  request.request.Name = this->name.c_str();
-  request.request.Shutdown = false;
-  if (this->announce.call(request))
+  /*
+    swarm_bot::Announce request;
+    request.request.Name = this->name.c_str();
+    request.request.Shutdown = false;
+    if (this->announce.call(request))
     {
-      if (request.response.StaticID <= 0)
-	{
-	  return ERR_SWARM_CONTROLLER;
-	}
-      this->staticID = request.response.StaticID;
+    if (request.response.ID <= 0)
+    {
+    return ERR_SWARM_CONTROLLER;
     }
-  else return ERR_ROS_SERVICE;
+    this->myid = request.response.ID;
+    }
+    else return ERR_ROS_SERVICE;
+  */
 
   // --------------- SwarmBot setup ----------------------------------------------------------------
-  if (this->robotMap.Add(this->staticID))
+  boost::hash<std::string> str_hash;
+  this->myid = str_hash(this->name);
+
+  if (this->robotMap.AddRobot(this->myid))
     {
       return ERR_SWARM_MAP;
     }
@@ -126,7 +131,7 @@ void SwarmBot::Run()
   int second = 0;
   double angleBuffer = 0;
   
-  PRINT(GREEN "I am [%s] assigned to [%d]", this->name.c_str(), this->staticID);
+  PRINT(GREEN "I am [%s] assigned to [%d]", this->name.c_str(), this->myid);
 
   while (this->isRunning)
     {
@@ -136,7 +141,7 @@ void SwarmBot::Run()
 	{
 	  second = 0;
 	  swarm_bot::Heartbeat pulse;
-	  pulse.StaticID = this->staticID;
+	  pulse.ID = this->myid;
 	  this->heartbeatOut.publish(pulse);
 	}
       
@@ -243,7 +248,7 @@ void SwarmBot::Run()
 		double diff = fabs(this->robot->getEncoderPose().getTh() - angleBuffer);
 		if (diff < 0.1)
 		  {
-		    this->PublishInitProc(this->staticID);
+		    this->PublishInitProc(this->myid);
 		    this->ChangeState(this->finder.HasLock() ? FS_INI_WATCH : FS_INI_WAIT);
 		  } else
 		  {
@@ -292,13 +297,15 @@ void SwarmBot::Run()
       rate.sleep();
     }
   
-  swarm_bot::Announce request;
-  request.request.Name = this->name.c_str();
-  request.request.Shutdown = true;
-  if (!this->announce.call(request))
-    {
+  /*  
+      swarm_bot::Announce request;
+      request.request.Name = this->name.c_str();
+      request.request.Shutdown = true;
+      if (!this->announce.call(request))
+      {
       PRINT(RED "Failed to leave swarm.");
-    }
+      }
+  */
   PRINT(BLUE "Good night.");
 }
 
@@ -310,7 +317,7 @@ void SwarmBot::Stop()
 void SwarmBot::PublishInitProc(int32_t TargetID)
 {
   swarm_bot::InitProc msg;
-  msg.StaticID = this->staticID;
+  msg.ID = this->myid;
   msg.FormationState = this->dstate;
   msg.TargetID = TargetID;
   this->initprocOut.publish(msg);
@@ -330,9 +337,9 @@ void SwarmBot::ChangeState(FormationState newState, int delay)
 // ----------------- Callbacks ---------------------------------------------------------------------
 void SwarmBot::CallbackInitProc(const swarm_bot::InitProc::ConstPtr &msg)
 {
-  if (!msg->StaticID)
+  if (!msg->ID)
     {
-      int p = this->robotMap.GetPriority(this->staticID);
+      int p = this->robotMap.GetPriority(this->myid);
       if (p == 0)
 	{
 	  this->ChangeState((FormationState)msg->FormationState);
@@ -344,17 +351,17 @@ void SwarmBot::CallbackInitProc(const swarm_bot::InitProc::ConstPtr &msg)
 	{
 	case FS_INI_WATCH:
 	  {
-	    int sid = this->robotMap.GetNextID(msg->StaticID);
-	    if (sid > 0)
+	    int id = this->robotMap.GetNextID(msg->ID);
+	    if (id > 0)
 	      {
-		this->activeRobot = sid;
-		if (sid == this->staticID)
+		this->activeRobot = id;
+		if (id == this->myid)
 		  {
 		    this->ChangeState(FS_INI_SEARCH);
 		  }
-	      } else if (sid == 0)
+	      } else if (id == 0)
 	      {
-		int p = this->robotMap.GetPriority(this->staticID);
+		int p = this->robotMap.GetPriority(this->myid);
 		if (p == 0)
 		  {
 		    this->ChangeState(FS_INI_SIGNAL_START, 2500);
@@ -366,25 +373,25 @@ void SwarmBot::CallbackInitProc(const swarm_bot::InitProc::ConstPtr &msg)
 	  
 	case FS_INI_SIGNAL_START:
 	  {
-	    this->activeRobot = msg->StaticID;
+	    this->activeRobot = msg->ID;
 	  }
 	  break;
 
 	case FS_INI_SIGNAL:
 	  {
-	    int sid = this->robotMap.GetNextID(msg->StaticID);
-	    if ((this->activeRobot == msg->StaticID) && (msg->StaticID == msg->TargetID) && (sid == this->staticID))
+	    int id = this->robotMap.GetNextID(msg->ID);
+	    if ((this->activeRobot == msg->ID) && (msg->ID == msg->TargetID) && (id == this->myid))
 	      {
 		this->ChangeState(FS_INI_SIGNAL_START, 2500);
 		this->PublishInitProc(0);
-	      } else if (sid == 0)
+	      } else if (id == 0)
 	      {
 		// ---------------------------------------------------------------------------------
 		if (this->robotMap.HasMultipleLeaders())
 		  {
 		    // TODO: merge trees
 		  }
-		if (this->robotMap.GetLeader() == this->staticID)
+		if (this->robotMap.GetLeader() == this->myid)
 		  {
 		    this->ChangeState(FS_RUN_FORWARD);
 		    this->PublishInitProc(0);
@@ -395,8 +402,8 @@ void SwarmBot::CallbackInitProc(const swarm_bot::InitProc::ConstPtr &msg)
 	  break;
 	  
 	case FS_INI_FOUND:
-	  int r = this->robotMap.Link(msg->StaticID, msg->TargetID);
-	  PRINT(YELLOW "Link [%d]->[%d] [%d]", msg->StaticID, msg->TargetID, r);
+	  int r = this->robotMap.LinkRobots(msg->ID, msg->TargetID);
+	  PRINT(YELLOW "Link [%d]->[%d] [%d]", msg->ID, msg->TargetID, r);
 	  break;
 	}
     }
@@ -404,5 +411,5 @@ void SwarmBot::CallbackInitProc(const swarm_bot::InitProc::ConstPtr &msg)
 
 void SwarmBot::CallbackHeartbeat(const swarm_bot::Heartbeat::ConstPtr &msg)
 {
-  this->robotMap.Heartbeat(msg->StaticID);
+  this->robotMap.Heartbeat(msg->ID);
 }

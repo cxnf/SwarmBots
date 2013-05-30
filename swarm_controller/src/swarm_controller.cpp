@@ -8,15 +8,6 @@
   \return Value indicating request was handled.
 */
 bool AnnounceService(swarm_bot::Announce::Request &req, swarm_bot::Announce::Response &res);
-//! Task service.
-/*!
-  Provides the service whick dynamicly assigns tasks to robots.
-  \param req Request from robot.
-  \param res Response to robot.
-  \return Value indicating request was handled.
-*/
-bool TaskService(swarm_bot::Task::Request &req, swarm_bot::Task::Response &res);
-
 //! Hearbeat handler.
 /*!
   Provides an implementation of the heartbeat system.
@@ -28,7 +19,6 @@ void HeartbeatCallback(const swarm_bot::Heartbeat::ConstPtr &msg);
 
 // Local variables
 RobotMap robots;                                  // map linking static id to robot
-Formation formation;                              // formation manager
 int32_t nextID;                                   // next available number to assign as static id
 
 
@@ -41,7 +31,6 @@ int main(int32_t argc, char **argv)
   ros::NodeHandle node;                           // obtain a handle to this node
   ros::Rate rate(FREQUENCY);                      // specify loop frequency
   ros::ServiceServer announce = node.advertiseService("announce", AnnounceService); // advertises the announce service
-  ros::ServiceServer task = node.advertiseService("task", TaskService); // advertises the task service
   ros::Subscriber subscriber = node.subscribe("heartbeat", 32, HeartbeatCallback); // subscribe to the heartbeat
   ROS_INFO("Swarm controller started");           // log state change
   
@@ -129,20 +118,6 @@ bool AnnounceService(swarm_bot::Announce::Request &req, swarm_bot::Announce::Res
   res.StaticID = r.GetStaticID();                 // assigned static id must be returned to request source
   ROS_INFO("Robot announced: [%s] -> [%d]", r.GetName().c_str(), r.GetStaticID()); // log announcement
   return true;                                    // return success
-}
-
-bool TaskService(swarm_bot::Task::Request &req, swarm_bot::Task::Response &res)
-{
-  for (RobotIterator it = robots.begin(); it != robots.end(); it++)
-    {
-      if (it->second.GetStaticID() == req.StaticID)
-	{
-	  return false;
-	}
-    }
-  res.DynamicID = formation.Assign(req.StaticID);  
-  ROS_INFO("Task assign: [%d] -> [%d]", req.StaticID, res.DynamicID);
-  return true;
 }
 
 void HeartbeatCallback(const swarm_bot::Heartbeat::ConstPtr &msg)

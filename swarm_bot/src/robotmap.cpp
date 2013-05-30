@@ -1,42 +1,30 @@
 #include "robotmap.h++"
 
 // ----------------- Constructors ------------------------------------------------------------------
-RobotMap::RobotMap() : robots()
+RobotMap::RobotMap() : robots(),
+		       priorities()
 {
 }
 
 // ----------------- Destructors -------------------------------------------------------------------
+RobotMap::~RobotMap()
+{
+}
 
 // ----------------- Methods -----------------------------------------------------------------------
-int RobotMap::Add(int staticID)
+int RobotMap::AddRobot(int id)
 {
-  if (this->robots.count(staticID))
+  if (this->robots.count(id))
     {
       return ERR_SWARM_MAP;
     }
-  this->robots[staticID] = new Node(staticID);
-  this->priorities.push_back(staticID);
+  this->robots[id] = new Node(id);
+  this->priorities.push_back(id);
   std::sort(this->priorities.begin(), this->priorities.end());
   return OK_SUCCESS;
 }
 
-void RobotMap::Heartbeat(int staticID)
-{
-  if (this->robots.count(staticID))
-    {
-      // TODO: implement heartbeat system
-    } else
-    {
-      this->Add(staticID);
-    }
-}
-
-bool RobotMap::Increment(std::list<int> *lost)
-{
-  return false;
-}
-
-int RobotMap::Link(int source, int target)
+int RobotMap::LinkRobots(int source, int target)
 {
   if (this->robots.count(source) && this->robots.count(target))
     {
@@ -56,20 +44,54 @@ int RobotMap::Link(int source, int target)
 		  return ERR_SWARM_CYCLE;
 		}
 	    }
-	  r1->Add(r0);
+	  r1->AddChild(r0);
 	  return OK_SUCCESS;
 	}
-    } else
+    }
+  else
     {
       return ERR_FAIL;
     }
 }
 
-int RobotMap::GetPriority(int staticID)
+int RobotMap::GetGraphCount()
+{
+  return 0;
+}
+
+int RobotMap::GetGraphLeader(int graph)
+{
+  return 0;
+}
+
+
+
+
+void RobotMap::Heartbeat(int id)
+{
+  if (this->robots.count(id))
+    {
+      // TODO: implement heartbeat system
+    } else
+    {
+      this->AddRobot(id);
+    }
+}
+
+bool RobotMap::Increment(std::list<int> *lost)
+{
+  return false;
+}
+
+
+
+
+
+int RobotMap::GetPriority(int id)
 {
   for (unsigned int i = 0; i < this->priorities.size(); ++i)
     {
-      if (this->priorities[i] == staticID)
+      if (this->priorities[i] == id)
 	{
 	  return i;
 	}
@@ -77,7 +99,7 @@ int RobotMap::GetPriority(int staticID)
   return -1;
 }
 
-int RobotMap::GetStaticID(unsigned int priority)
+int RobotMap::GetID(unsigned int priority)
 {
   if (priority >= this->priorities.size())
     {
@@ -86,27 +108,19 @@ int RobotMap::GetStaticID(unsigned int priority)
   return this->priorities[priority];
 }
 
-int RobotMap::GetNextID(int staticID)
+int RobotMap::GetNextID(int id)
 {
-  int p = this->GetPriority(staticID);
+  int p = this->GetPriority(id);
   if (p < 0)
     {
       return 0;
     }
-  return this->GetStaticID(p + 1);
+  return this->GetID(p + 1);
 }
 
-bool RobotMap::isleader(int id)
-{
-  if (this->robots.count(id))
-    {
-      Node *r = this->robots[id];
-      return r->GetLeader() == 0;
-    } else
-    {
-      return false;
-    }
-}
+
+
+
 
 int RobotMap::GetLeader()
 {

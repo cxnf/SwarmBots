@@ -35,6 +35,10 @@ public:
     \param id Id of robot.
   */
   Node(int id);
+  /*! \brief Destructor.
+    Frees allocated memory.
+  */
+  ~Node();
 
   /*! \brief Returns id.
     Returns the id of the robot.
@@ -52,7 +56,7 @@ public:
     Adds given node as a child node of this node.
     \param n Node to link to.
   */
-  void Add(Node *n);
+  void AddChild(Node *n);
 
   /*! \brief Returns value indicating robot has child with id.
     Looks through followers recursively to determine if the robot is a follower.
