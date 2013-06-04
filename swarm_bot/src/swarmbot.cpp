@@ -4,8 +4,8 @@
 SwarmBot::SwarmBot() : isRunning(false),
 		       name(),
 		       myid(0),
-		       fstate(FS_INI_WAIT),
-		       dstate(FS_INI_WAIT),
+		       // fstate(FS_INI_WAIT),
+		       // dstate(FS_INI_WAIT),
 		       activeRobot(0),
 		       stateDelay(0),
 		       robotMap(),
@@ -15,7 +15,6 @@ SwarmBot::SwarmBot() : isRunning(false),
 		       heartbeatIn(),
 		       initprocOut(),
 		       initprocIn(),
-		       announce(),
 		       arguments(NULL),
 		       robot(NULL),
 		       connector(NULL),
@@ -91,22 +90,6 @@ int SwarmBot::Setup()
   this->heartbeatIn = this->node.subscribe("heartbeat", 32, &SwarmBot::CallbackHeartbeat, this);
   this->initprocOut = this->node.advertise<swarm_bot::InitProc>("initproc", 32);
   this->initprocIn = this->node.subscribe("initproc", 32, &SwarmBot::CallbackInitProc, this);
-  // this->announce = this->node.serviceClient<swarm_bot::Announce>("announce");
-  
-  /*
-    swarm_bot::Announce request;
-    request.request.Name = this->name.c_str();
-    request.request.Shutdown = false;
-    if (this->announce.call(request))
-    {
-    if (request.response.ID <= 0)
-    {
-    return ERR_SWARM_CONTROLLER;
-    }
-    this->myid = request.response.ID;
-    }
-    else return ERR_ROS_SERVICE;
-  */
 
   // --------------- SwarmBot setup ----------------------------------------------------------------
   boost::hash<std::string> str_hash;
@@ -120,6 +103,10 @@ int SwarmBot::Setup()
     {
       return ERR_SWARM_FINDER;
     }
+
+  this->dev.map = &this->robotMap;
+  this->dev.finder = &this->finder;
+  this->dev.robot = this->robot;
 
   this->isRunning = true;
   return OK_SUCCESS;
@@ -150,162 +137,25 @@ void SwarmBot::Run()
 	{
 	  if (this->delayTimer.mSecSince() > this->stateDelay)
 	    {
-	      this->fstate = this->dstate;
-	    } else
-	    {
-	      this->fstate = FS_INI_WAIT;
+	      this->LoadStateController();
 	    }
 	}
 
-      // ----------- Formation ---------------------------------------------------------------------
-      switch (this->fstate)
+      // ----------- Update ------------------------------------------------------------------------
+      if (this->state)
 	{
-	case FS_INI_WAIT: break;
-
-	case FS_INI_FOUND:
-	  {
-	    this->ChangeState(FS_INI_WAIT);
-	  }
-	  break;
-	  
-	case FS_INI_SEARCH:
-	  {
-	    double a, d;
-	    this->robot->lock();
-	    ArPose p = this->robot->getEncoderPose();
-	    if (!this->finder.FindClosestRobot(&a, &d))
-	      {
-		this->robot->setRotVel(0);
-		if (a < -89)
-		  {
-		    this->robot->setHeading(p.getTh() - 5);
-		  }
-		if (a > 89)
-		  {
-		    this->robot->setHeading(p.getTh() + 5);
-		  }
-		this->ChangeState(FS_INI_SEARCH_LOCK);
-	      } else
-	      {
-		this->robot->setRotVel(10);
-	      }
-	    this->robot->unlock();
-	  }
-	  break;
-
-	case FS_INI_SEARCH_LOCK:
-	  {
-	    double a, d;
-	    this->robot->lock();
-	    if (this->robot->isHeadingDone())
-	      {
-		if (this->finder.HasLock())
-		  {
-		    if (!this->finder.MeasureMedian())
-		      {
-			this->ChangeState(FS_INI_WATCH);
-			this->PublishInitProc(0);
-		      }
-		  } else if (!this->finder.FindClosestRobot(&a, &d))
-		  {
-		    this->finder.LockOn(a);
-		  } else
-		  {
-		    PRINT(RED "Lock failure.");
-		  }
-	      }
-	    this->robot->unlock();
-	  }
-	  break;
-
-	case FS_INI_SIGNAL_START:
-	  {
-	    this->robot->lock();
-	    angleBuffer = this->robot->getEncoderPose().getTh();
-	    this->robot->setHeading(this->robot->getEncoderPose().getTh() + 180);
-	    this->ChangeState(FS_INI_SIGNAL_RESTORE);
-	    this->robot->unlock();
-	  }
-	  break;
-
-	case FS_INI_SIGNAL_RESTORE:
-	  {
-	    this->robot->lock();
-	    if (this->robot->isHeadingDone())
-	      {
-		this->robot->setHeading(angleBuffer);
-		this->ChangeState(FS_INI_SIGNAL);
-	      }
-	    this->robot->unlock();
-	  }
-	  break;
-	  
-	case FS_INI_SIGNAL:
-	  {
-	    this->robot->lock();
-	    if (this->robot->isHeadingDone())
-	      {
-		double diff = fabs(this->robot->getEncoderPose().getTh() - angleBuffer);
-		if (diff < 0.1)
-		  {
-		    this->PublishInitProc(this->myid);
-		    this->ChangeState(this->finder.HasLock() ? FS_INI_WATCH : FS_INI_WAIT);
-		  } else
-		  {
-		    this->robot->setHeading(angleBuffer);
-		  }
-	      }
-	    this->robot->unlock();
-	  }
-	  break;
-
-	case FS_INI_WATCH:
-	  {
-	    double d;
-	    if (!this->finder.RangeAt(this->finder.GetAngle(), &d))
-	      {
-		double diff = fabs(this->finder.GetMedian() - d);
-		if (diff > LASER_EPSILON)
-		  {
-		    this->finder.ResetLockOn();
-		    this->ChangeState(FS_INI_FOUND);
-		    this->PublishInitProc(this->activeRobot);
-		  }
-	      } else
-	      {
-		PRINT(RED "Robot ran away!");
-		this->ChangeState(FS_INI_WAIT);
-	      }
-	  }
-	  break;
-
-	case FS_RUN_FOLLOW:
-	  // break;
-	case FS_RUN_FORWARD:
-	  this->finder.PrintScan();
-	  /*{
-	    this->robot->lock();
-	    if (this->robot->isMoveDone())
-	    this->robot->setVel2(100, 100);
-	    this->robot->unlock();
-	    }*/
-	  break;
+	  FState fs;
+	  this->state->UpdateState(&this->dev, &fs);
+	  if (fs != FS_UNDEFINED)
+	    {
+	      this->ChangeState(fs, false, 0);
+	    }
 	}
 
       // -------------------------------------------------------------------------------------------
       ros::spinOnce();
       rate.sleep();
     }
-  
-  /*  
-      swarm_bot::Announce request;
-      request.request.Name = this->name.c_str();
-      request.request.Shutdown = true;
-      if (!this->announce.call(request))
-      {
-      PRINT(RED "Failed to leave swarm.");
-      }
-  */
   PRINT(BLUE "Good night.");
 }
 
@@ -334,78 +184,101 @@ void SwarmBot::ChangeState(FormationState newState, int delay)
     }
 }
 
+void SwarmBot::ChangeState(FState state, bool backup, int delay)
+{
+  this->stateDelay = delay;
+  if (this->stateDelay <= 0)
+    {
+      this->stateDelay = 1;
+    }
+  if (backup)
+    {
+      if (this->oldstate) delete this->oldstate;
+      this->oldstate = this->state;
+    }
+  else if (this->state) delete this->state;
+  this->state = NULL;
+  this->delayTimer.setToNow();
+  
+}
+
+int SwarmBot::LoadStateController()
+{
+  switch (this->nextstate)
+    {
+    case FS_WAIT:
+      {
+	if (this->oldstate)
+	  {
+	    this->state = this->oldstate;
+	    this->oldstate = NULL;
+	  }
+	else
+	  {
+	    this->state = NULL;
+	  }
+      }
+      break;
+
+    case FS_SEARCH:
+      this->state = new SearchState;
+      break;
+    case FS_SIGNAL:
+      this->state = new SignalState;
+      break;
+    case FS_FOLLOW:
+      this->state = new FollowState;
+      break;
+    case FS_LEADER:
+      this->state = new LeaderState;
+      break;
+      
+    default:
+      this->nextstate = FS_WAIT;
+      return this->LoadStateController();
+    }
+  return OK_SUCCESS;
+}
+
 // ----------------- Callbacks ---------------------------------------------------------------------
 void SwarmBot::CallbackInitProc(const swarm_bot::InitProc::ConstPtr &msg)
 {
-  if (!msg->ID)
+  switch ((BroadcastState)msg->FormationState)
     {
-      int p = this->robotMap.GetPriority(this->myid);
-      if (p == 0)
-	{
-	  this->ChangeState((FormationState)msg->FormationState);
-	}
-    }
-  else
-    {
-      switch (msg->FormationState)
-	{
-	case FS_INI_WATCH:
+    case BS_START:
+      {
+	int p = this->robotMap.GetPriority(this->myid);
+	if (p == 0)
 	  {
-	    int id = this->robotMap.GetNextID(msg->ID);
-	    if (id > 0)
-	      {
-		this->activeRobot = id;
-		if (id == this->myid)
-		  {
-		    this->ChangeState(FS_INI_SEARCH);
-		  }
-	      } else if (id == 0)
-	      {
-		int p = this->robotMap.GetPriority(this->myid);
-		if (p == 0)
-		  {
-		    this->ChangeState(FS_INI_SIGNAL_START, 2500);
-		    this->PublishInitProc(0);
-		  }
-	      }
+	    this->ChangeState((FState)msg->FormationState);
 	  }
-	  break;
-	  
-	case FS_INI_SIGNAL_START:
+      }
+      break;
+
+    case BS_NEXT:
+      {
+	int id = this->robotMap.GetNextID(msg->ID);
+	if (id == 0)
+	  {
+	    // merge graphs
+	  }
+	else
 	  {
 	    this->activeRobot = msg->ID;
-	  }
-	  break;
-
-	case FS_INI_SIGNAL:
-	  {
-	    int id = this->robotMap.GetNextID(msg->ID);
-	    if ((this->activeRobot == msg->ID) && (msg->ID == msg->TargetID) && (id == this->myid))
+	    if (id == this->myid)
 	      {
-		this->ChangeState(FS_INI_SIGNAL_START, 2500);
-		this->PublishInitProc(0);
-	      } else if (id == 0)
-	      {
-		// ---------------------------------------------------------------------------------
-		if (this->robotMap.HasMultipleLeaders())
-		  {
-		    // TODO: merge trees
-		  }
-		if (this->robotMap.GetLeader() == this->myid)
-		  {
-		    this->ChangeState(FS_RUN_FORWARD);
-		    this->PublishInitProc(0);
-		    PRINT(YELLOW "I'm leading!");
-		  }
+		this->ChangeState(FS_SIGNAL, true, 2500);
 	      }
 	  }
-	  break;
-	  
-	case FS_INI_FOUND:
-	  int r = this->robotMap.LinkRobots(msg->ID, msg->TargetID);
-	  PRINT(YELLOW "Link [%d]->[%d] [%d]", msg->ID, msg->TargetID, r);
-	  break;
-	}
+      }
+      break;
+      
+    case BS_FOUND:
+      {
+	int code = this->robotMap.LinkRobots(msg->ID, msg->TargetID);
+	PRINT(YELLOW "Link [%d]->[%d] [%d]", msg->ID, msg->TargetID, code);
+      }
+      break;
     }
 }
 

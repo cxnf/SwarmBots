@@ -35,9 +35,13 @@ include_directories(/usr/local/Aria/include)
 rosbuild_add_executable(swarm_bot
   src/main.cpp
   src/swarmbot.cpp
-  src/rangefinder.cpp
+  src/objectfinder.cpp
   src/robotmap.cpp
-  src/node.cpp)
+  src/node.cpp
+  src/searchstate.cpp
+  src/signalstate.cpp
+  src/followstate.cpp
+  src/leaderstate.cpp)
 target_link_libraries(swarm_bot
   -lboost_regex
   /usr/local/Aria/lib/libAria.so

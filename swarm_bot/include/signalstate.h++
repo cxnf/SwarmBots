@@ -12,7 +12,7 @@
   \brief State controller for signal state.
   State controller for signalling and restoring state.
 */
-class SignalState
+class SignalState : public IStateController
 {
 private:
   /*! \enum SignalSubState
@@ -21,9 +21,9 @@ private:
   */
   enum SignalSubState
     {
-      SS_SEND = 1,
-      SS_RESTORE,
-      SS_FINALIZE,
+      SIG_SEND = 1,
+      SIG_RESTORE,
+      SIG_FINALIZE,
     };
   
   SignalSubState substate;                        //<! current internal state of controller
@@ -41,9 +41,9 @@ public:
 
   /*! \brief Update handle.
     Updates state controller.
-    \param bot SwarmBot main object.
+    \param bot Available devices.
     \param state New state, if any.
     \return OK_SUCCESS or error code.
   */
-  virtual int UpdateState(SwarmBot *bot, FState *state);
+  virtual int UpdateState(Devices *bot, FState *state);
 };

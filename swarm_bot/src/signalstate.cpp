@@ -11,22 +11,48 @@ SignalState::~SignalState()
 }
 
 // ----------------- Methods -----------------------------------------------------------------------
-virtual int SignalState::UpdateState(SwarmBot *bot, FState *state)
+int SignalState::UpdateState(Devices *bot, FState *state)
 {
   switch (this->substate)
     {
-    case SS_SEND:
+    case SIG_SEND:
       {
+	bot->robot->lock();
+	this->restore = bot->robot->getEncoderPose().getTh();
+	bot->robot->setHeading(this->restore + 180);
+	this->substate = SIG_RESTORE;
+	bot->robot->unlock();
       }
       break;
 
-    case SS_RESTORE:
+    case SIG_RESTORE:
       {
+	bot->robot->lock();
+	if (bot->robot->isHeadingDone())
+	  {
+	    bot->robot->setHeading(this->restore);
+	    this->substate = SIG_FINALIZE;
+	  }
+	bot->robot->unlock();
       }
       break;
 
-    case SS_FINALIZE:
+    case SIG_FINALIZE:
       {
+	bot->robot->lock();
+	if (bot->robot->isHeadingDone())
+	  {
+	    double dif = fabs(this->restore - bot->robot->getEncoderPose().getTh());
+	    if (dif < 0.1)
+	      {
+		*state = FS_WAIT;
+	      }
+	    else
+	      {
+		bot->robot->setHeading(this->restore);
+	      }
+	  }
+	bot->robot->unlock();
       }
       break;
     }

@@ -6,7 +6,8 @@
 #include "Aria.h"
 #include "assist.h++"
 #include "errcodes.h++"
-#include "swarmbot.h++"
+#include "objectfinder.h++"
+#include "robotmap.h++"
 
 /*! \enum BroadcastState
   \brief Broadcast states.
@@ -28,13 +29,24 @@ enum FState
   {
     FS_UNDEFINED = 0,                             //!< undefined behavior
 
-    FS_INI_WAIT = 1,                              //!< wait for message on InitProc
-    FS_INI_SEARCH,                                //!< search, watch and find possible leaders
-    FS_INI_SIGNAL,                                //!< signal other robots
+    FS_WAIT = 1,                                  //!< wait for message on InitProc, restores previous state if any
+    FS_SEARCH,                                    //!< search, watch and find possible leaders
+    FS_SIGNAL,                                    //!< signal other robots
     
-    FS_RUN_FOLLOW,                                //!< follows parent robot based on graph
-    FS_RUN_LEADER,                                //!< leader of graph
+    FS_FOLLOW,                                    //!< follows parent robot based on graph
+    FS_LEADER,                                    //!< leader of graph
   };
+
+/*! \struct Devices
+  \brief Devices created by bot.
+  All available devices for the robot.
+*/
+struct Devices
+{
+  RobotMap *map;
+  ObjectFinder *finder;
+  ArRobot *robot;
+};
 
 /*! \class IStateController
   \brief Interface for state controllers.
@@ -46,14 +58,14 @@ public:
   /* \brief Destructor.
      Define desturctor to prevent undefined behavior.
   */
-  ~IStateController() { }
+  virtual ~IStateController() { }
   
   /*! \brief Cyclic update handle for state contorller.
     Update handle for state controllers, its called at the same frequency as the main loop.
     If robot should change state, the state parameter is set to the proposed state.
-    \param bot Pointer to main robot object.
+    \param bot Robot devices.
     \param state out - New state or FS_UNDEFINED if no change requested.
     \return OK_SUCCESS or error code.
   */
-  virtual int UpdateState(SwarmBot *bot, FState *state) = 0;
-}
+  virtual int UpdateState(Devices *bot, FState *state) = 0;
+};

@@ -41,4 +41,12 @@ public:
     \return OK_SUCCES, ERR_FAIL or error code.
   */
   int GetClosestObject(double *angle, double *distance);
+  
+  /*! \brief Finds distance at angle.
+    Returns the distance at the given angle.
+    \param angle Angle between robot and object.
+    \param distance out - Distance between robot and object.
+    \return OK_SUCCESS, ERR_FAIL or error code.
+  */
+  int GetObjectAt(double angle, double *distance);
 };

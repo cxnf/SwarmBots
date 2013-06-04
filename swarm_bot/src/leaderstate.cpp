@@ -11,7 +11,7 @@ LeaderState::~LeaderState()
 }
 
 // ----------------- Methods -----------------------------------------------------------------------
-virtual int LeaderState::UpdateState(SwarmBot *bot, FState *state)
+int LeaderState::UpdateState(Devices *bot, FState *state)
 {
   return OK_SUCCESS;
 }

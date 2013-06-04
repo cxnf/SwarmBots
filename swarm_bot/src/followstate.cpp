@@ -11,7 +11,7 @@ FollowState::~FollowState()
 }
 
 // ----------------- Methods -----------------------------------------------------------------------
-virtual int FollowState::UpdateState(SwarmBot *bot, FState *state)
+int FollowState::UpdateState(Devices *bot, FState *state)
 {
   return OK_SUCCESS;
 }

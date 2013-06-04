@@ -12,7 +12,7 @@
   \brief State controller for follow state.
   State controller for following another robot.
 */
-class FollowState
+class FollowState : public IStateController
 {
 private:
 
@@ -28,9 +28,9 @@ public:
 
   /*! \brief Update handle.
     Updates state controller.
-    \param bot SwarmBot main object.
+    \param bot Available devices.
     \param state New state, if any.
     \return OK_SUCCESS or error code.
   */
-  virtual int UpdateState(SwarmBot *bot, FState *state);
+  virtual int UpdateState(Devices *bot, FState *state);
 };

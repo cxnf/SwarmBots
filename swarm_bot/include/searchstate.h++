@@ -6,6 +6,8 @@
 #define VERBOSE
 #define CONSOLE_COLOR
 
+#include <algorithm>
+#include <vector>
 #include "istatecontroller.h++"
 
 /*! \class SearchState
@@ -21,13 +23,15 @@ private:
   */
   enum SearchSubState
     {
-      SS_SEARCH = 1,                              //!< search for objects
-      SS_LOCK,                                    //!< lock on object
-      SS_WATCH,                                   //!< watch objects
+      SER_SEARCH = 1,                              //!< search for objects
+      SER_LOCK,                                    //!< lock on object
+      SER_WATCH,                                   //!< watch objects
     };
   
   SearchSubState substate;                        //!< current internal state of controller
   double lockangle;                               //!< angle to observed object
+  std::vector<double> lockdist;                        //!< measured distances
+  double median;                                  //!< distance median
   
 public:
   /*! \brief Default constructor.
@@ -41,9 +45,9 @@ public:
   
   /*! \brief Update handle.
     Updates state controller.
-    \param bot SwarmBot main object.
+    \param bot Available devices.
     \param state New state, if any.
     \return OK_SUCCESS or error code.
   */
-  virtual int UpdateState(SwarmBot *bot, FState *state);
+  virtual int UpdateState(Devices *bot, FState *state);
 };

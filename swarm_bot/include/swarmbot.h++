@@ -17,13 +17,19 @@
 // ----------------- Project Parts -----------------------------------------------------------------
 #include "assist.h++"
 #include "errcodes.h++"
-#include "rangefinder.h++"
+// #include "rangefinder.h++"
+#include "objectfinder.h++"
 #include "robotmap.h++"
+
+#include "istatecontroller.h++"
+#include "searchstate.h++"
+#include "signalstate.h++"
+#include "followstate.h++"
+#include "leaderstate.h++"
 
 // ----------------- Messages and Services ---------------------------------------------------------
 #include "swarm_bot/Heartbeat.h"
 #include "swarm_bot/InitProc.h"
-#include "swarm_bot/Announce.h"
 
 // ----------------- Defines -----------------------------------------------------------------------
 #define LASER_EPSILON 15
@@ -63,16 +69,21 @@ private:
   FormationState dstate;                          //!< delayed state to swap to
   int activeRobot;                                //!< id of signalling (or searching) robot
   int stateDelay;                                 //!< delay in msec before state swap
-  
+
+  Devices dev;
+  IStateController *state;
+  IStateController *oldstate;
+  FState nextstate;
+
   RobotMap robotMap;                              //!< map (and graph if build) of swarm robots
-  RangeFinder finder;                             //!< range finder of the robot
+  // RangeFinder finder;                             //!< range finder of the robot
+  ObjectFinder finder;
   
   ros::NodeHandle node;                           //!< handle to program node
   ros::Publisher heartbeatOut;                    //!< publisher for heartbeat topic
   ros::Subscriber heartbeatIn;                    //!< receiver for hearbeat topic
   ros::Publisher initprocOut;                     //!< init procedure writer
   ros::Subscriber initprocIn;                     //!< init procedure receiver
-  ros::ServiceClient announce;                    //!< client for announce service
   
   ArArgumentParser *arguments;                    //!< argument parser for connectors
   ArRobot *robot;                                 //!< aria client
@@ -93,6 +104,10 @@ private:
     \param delay Optional delay before state change takes effect.
   */
   void ChangeState(FormationState newState, int delay = 0);
+
+  
+  int LoadStateController();
+  
   
 public:
   /*! \brief Initializes fields.
@@ -122,6 +137,11 @@ public:
     The main loop will finish its current iteration.
   */
   void Stop();
+
+
+  void ChangeState(FState state, bool backup = false, int delay = 1);
+  void Broadcast(BroadcastState state, int target);
+
   
   /*! \brief InitProc callback.
     Processes messages from the initproc topic.
