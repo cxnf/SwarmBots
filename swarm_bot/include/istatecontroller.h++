@@ -15,8 +15,11 @@
 */
 enum BroadcastState
   {
+    BS_UNDEFINED = 0,                             //!< undefined behavior
+    
     BS_START = 1,                                 //!< start state sequence
-    BS_NEXT,                                      //!< turn goes to next robot in priority list
+    BS_NEXT_SEARCH,                               //!< next robot should search
+    BS_NEXT_SIGNAL,                               //!< next robot should signal
     BS_FOUND,                                     //!< source identified target
   };
 
@@ -32,7 +35,6 @@ enum FState
     FS_WAIT = 1,                                  //!< wait for message on InitProc, restores previous state if any
     FS_SEARCH,                                    //!< search, watch and find possible leaders
     FS_SIGNAL,                                    //!< signal other robots
-    
     FS_FOLLOW,                                    //!< follows parent robot based on graph
     FS_LEADER,                                    //!< leader of graph
   };
@@ -65,7 +67,8 @@ public:
     If robot should change state, the state parameter is set to the proposed state.
     \param bot Robot devices.
     \param state out - New state or FS_UNDEFINED if no change requested.
+    \param broadcast out - State to broadcast, if any.
     \return OK_SUCCESS or error code.
   */
-  virtual int UpdateState(Devices *bot, FState *state) = 0;
+  virtual int UpdateState(Devices *bot, FState *state, BroadcastState *broadcast) = 0;
 };

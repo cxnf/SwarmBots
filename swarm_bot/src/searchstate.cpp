@@ -14,7 +14,7 @@ SearchState::~SearchState()
 }
 
 // ----------------- Methods -----------------------------------------------------------------------
-int SearchState::UpdateState(Devices *bot, FState *state)
+int SearchState::UpdateState(Devices *bot, FState *state, BroadcastState *broadcast)
 {
   switch (this->substate)
     {
@@ -61,6 +61,7 @@ int SearchState::UpdateState(Devices *bot, FState *state)
 	    this->median = this->lockdist[n];
 	    this->lockdist.clear();
 	    this->substate = SER_WATCH;
+	    *broadcast = BS_NEXT_SEARCH;
 	  }
       }
       break;
@@ -71,9 +72,10 @@ int SearchState::UpdateState(Devices *bot, FState *state)
 	if (!bot->finder->GetObjectAt(this->lockangle, &d))
 	  {
 	    double dif = fabs(this->median - d);
-	    if (dif < 10)
+	    if (dif > 15.0)
 	      {
 		*state = FS_WAIT;
+		*broadcast = BS_FOUND;
 	      }
 	  }
 	else

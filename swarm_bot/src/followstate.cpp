@@ -11,7 +11,7 @@ FollowState::~FollowState()
 }
 
 // ----------------- Methods -----------------------------------------------------------------------
-int FollowState::UpdateState(Devices *bot, FState *state)
+int FollowState::UpdateState(Devices *bot, FState *state, BroadcastState *broadcast)
 {
   return OK_SUCCESS;
 }

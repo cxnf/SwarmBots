@@ -6,7 +6,10 @@
 #define VERBOSE
 #define CONSOLE_COLOR
 
+#include <list>
+#include <map>
 #include "Aria.h"
+
 #include "assist.h++"
 #include "errcodes.h++"
 
@@ -17,6 +20,7 @@
 class ObjectFinder
 {
 private:
+  ArLaser *laser;                                 //!< laser used for range measurements
 
 public:
   /*! \brief Default contructor.

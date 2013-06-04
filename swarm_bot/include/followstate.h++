@@ -32,5 +32,5 @@ public:
     \param state New state, if any.
     \return OK_SUCCESS or error code.
   */
-  virtual int UpdateState(Devices *bot, FState *state);
+  virtual int UpdateState(Devices *bot, FState *state, BroadcastState *broadcast);
 };

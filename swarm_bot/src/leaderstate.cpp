@@ -11,7 +11,7 @@ LeaderState::~LeaderState()
 }
 
 // ----------------- Methods -----------------------------------------------------------------------
-int LeaderState::UpdateState(Devices *bot, FState *state)
+int LeaderState::UpdateState(Devices *bot, FState *state, BroadcastState *broadcast)
 {
   return OK_SUCCESS;
 }

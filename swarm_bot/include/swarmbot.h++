@@ -17,10 +17,8 @@
 // ----------------- Project Parts -----------------------------------------------------------------
 #include "assist.h++"
 #include "errcodes.h++"
-// #include "rangefinder.h++"
 #include "objectfinder.h++"
 #include "robotmap.h++"
-
 #include "istatecontroller.h++"
 #include "searchstate.h++"
 #include "signalstate.h++"
@@ -34,26 +32,6 @@
 // ----------------- Defines -----------------------------------------------------------------------
 #define LASER_EPSILON 15
 
-/*! \enum FormationState
-  \brief States robot can enter to create/maintain a formation.
-  Different states a robot can enter.
-  A state defines the behaviour of the robot.
- */
-typedef enum
-  {
-    FS_INI_WAIT = 1,                              //!< wait for a message on InitProc topic
-    FS_INI_SEARCH,                                //!< search for a robot
-    FS_INI_SEARCH_LOCK,                           //!< lock on possible robot
-    FS_INI_SIGNAL_START,                          //!< send out a signal
-    FS_INI_SIGNAL_RESTORE,                        //!< restore state changes caused by signal
-    FS_INI_SIGNAL,                                //!< wait until finished signal
-    FS_INI_WATCH,                                 //!< watch for a signal
-    FS_INI_FOUND,                                 //!< found a robot
-    
-    FS_RUN_FORWARD,                               //!< leader moves forward
-    FS_RUN_FOLLOW,                                //!< follow leader
-  } FormationState;
-
 /*! \class SwarmBot
   \brief Main class.
   The main class of a robot in the swarm.
@@ -65,19 +43,16 @@ private:
   bool isRunning;                                 //!< main loop condition
   std::string name;                               //!< name of the robot
   int myid;                                       //!< id of the robot
-  FormationState fstate;                          //!< current state of the robot
-  FormationState dstate;                          //!< delayed state to swap to
   int activeRobot;                                //!< id of signalling (or searching) robot
   int stateDelay;                                 //!< delay in msec before state swap
 
-  Devices dev;
-  IStateController *state;
-  IStateController *oldstate;
-  FState nextstate;
+  Devices dev;                                    //!< devices for state controller
+  IStateController *state;                        //!< current state controller
+  IStateController *oldstate;                     //!< backup state controller
+  FState nextstate;                               //!< type of state controller to load
 
   RobotMap robotMap;                              //!< map (and graph if build) of swarm robots
-  // RangeFinder finder;                             //!< range finder of the robot
-  ObjectFinder finder;
+  ObjectFinder finder;                            //!< object finder
   
   ros::NodeHandle node;                           //!< handle to program node
   ros::Publisher heartbeatOut;                    //!< publisher for heartbeat topic
@@ -92,21 +67,10 @@ private:
   ArTime delayTimer;                              //!< timer to delay steps
   
   
-  /*! \brief Publishes to InitProc.
-    Publishes a message to the InitProc topic.
-    All posible fields are initialized with current member values.
-    \param TargetID Id of target robot, if any.
-  */
-  void PublishInitProc(int32_t TargetID);
-  /*! \brief Changes robot state.
-    Updates the robot formation state.
-    \param newState State to change to.
-    \param delay Optional delay before state change takes effect.
-  */
-  void ChangeState(FormationState newState, int delay = 0);
-
   
   int LoadStateController();
+  void ChangeState(FState fstate, bool backup = false, int delay = 1);
+  void Broadcast(BroadcastState state, int target);
   
   
 public:
@@ -138,11 +102,6 @@ public:
   */
   void Stop();
 
-
-  void ChangeState(FState state, bool backup = false, int delay = 1);
-  void Broadcast(BroadcastState state, int target);
-
-  
   /*! \brief InitProc callback.
     Processes messages from the initproc topic.
     \param msg Received message.

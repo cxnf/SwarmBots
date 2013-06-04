@@ -4,10 +4,12 @@
 SwarmBot::SwarmBot() : isRunning(false),
 		       name(),
 		       myid(0),
-		       // fstate(FS_INI_WAIT),
-		       // dstate(FS_INI_WAIT),
 		       activeRobot(0),
 		       stateDelay(0),
+		       dev(),
+		       state(NULL),
+		       oldstate(NULL),
+		       nextstate(FS_WAIT),
 		       robotMap(),
 		       finder(),
 		       node(),
@@ -31,6 +33,8 @@ SwarmBot::~SwarmBot()
   this->robot->waitForRunExit();
   Aria::shutdown();
   
+  if (state) delete state;
+  if (oldstate) delete oldstate;
   if (arguments) delete arguments;
   if (robot) delete robot;
   if (connector) delete connector;
@@ -116,7 +120,6 @@ void SwarmBot::Run()
 {
   ros::Rate rate(10);
   int second = 0;
-  double angleBuffer = 0;
   
   PRINT(GREEN "I am [%s] assigned to [%d]", this->name.c_str(), this->myid);
 
@@ -138,17 +141,25 @@ void SwarmBot::Run()
 	  if (this->delayTimer.mSecSince() > this->stateDelay)
 	    {
 	      this->LoadStateController();
+	      this->stateDelay = 0;
+	      this->nextstate = FS_UNDEFINED;
 	    }
 	}
 
       // ----------- Update ------------------------------------------------------------------------
       if (this->state)
 	{
-	  FState fs;
-	  this->state->UpdateState(&this->dev, &fs);
+	  FState fs = FS_UNDEFINED;
+	  BroadcastState bs = BS_UNDEFINED;
+	  int code = this->state->UpdateState(&this->dev, &fs, &bs);
+	  if (code) PRINT(BLUE "Code [%d]", code);
 	  if (fs != FS_UNDEFINED)
 	    {
 	      this->ChangeState(fs, false, 0);
+	    }
+	  if (bs != BS_UNDEFINED)
+	    {
+	      this->Broadcast(bs, this->activeRobot);
 	    }
 	}
 
@@ -164,27 +175,16 @@ void SwarmBot::Stop()
   this->isRunning = false;
 }
 
-void SwarmBot::PublishInitProc(int32_t TargetID)
+void SwarmBot::Broadcast(BroadcastState state, int target)
 {
   swarm_bot::InitProc msg;
   msg.ID = this->myid;
-  msg.FormationState = this->dstate;
-  msg.TargetID = TargetID;
+  msg.FormationState = state;
+  msg.TargetID = target;
   this->initprocOut.publish(msg);
 }
 
-void SwarmBot::ChangeState(FormationState newState, int delay)
-{
-  this->stateDelay = delay;
-  this->dstate = newState;
-  this->delayTimer.setToNow();
-  if (delay == 0)
-    {
-      this->fstate = newState;
-    }
-}
-
-void SwarmBot::ChangeState(FState state, bool backup, int delay)
+void SwarmBot::ChangeState(FState fstate, bool backup, int delay)
 {
   this->stateDelay = delay;
   if (this->stateDelay <= 0)
@@ -198,12 +198,13 @@ void SwarmBot::ChangeState(FState state, bool backup, int delay)
     }
   else if (this->state) delete this->state;
   this->state = NULL;
+  this->nextstate = fstate;
   this->delayTimer.setToNow();
-  
 }
 
 int SwarmBot::LoadStateController()
 {
+  PRINT(GRAY "Loading [%d]", this->nextstate);
   switch (this->nextstate)
     {
     case FS_WAIT:
@@ -250,12 +251,38 @@ void SwarmBot::CallbackInitProc(const swarm_bot::InitProc::ConstPtr &msg)
 	int p = this->robotMap.GetPriority(this->myid);
 	if (p == 0)
 	  {
-	    this->ChangeState((FState)msg->FormationState);
+	    this->ChangeState(FS_SEARCH, false, 2500);
+	    PRINT(CYAN "Active [%d]", msg->FormationState);
+	  }
+	this->activeRobot = this->robotMap.GetID(0);
+      }
+      break;
+
+    case BS_NEXT_SEARCH:
+      {
+	int id = this->robotMap.GetNextID(msg->ID);
+	if (id == 0)
+	  {
+	    int p = this->robotMap.GetPriority(this->myid);
+	    if (p == 0)
+	      {
+		this->ChangeState(FS_SIGNAL, true, 2500);
+	      }
+	    this->activeRobot = this->robotMap.GetID(0);
+	  }
+	else
+	  {
+	    this->activeRobot = id;
+	    if (id == this->myid)
+	      {
+		PRINT(CYAN "Active.");
+		this->ChangeState(FS_SEARCH, true, 2500);
+	      }
 	  }
       }
       break;
 
-    case BS_NEXT:
+    case BS_NEXT_SIGNAL:
       {
 	int id = this->robotMap.GetNextID(msg->ID);
 	if (id == 0)
@@ -264,9 +291,10 @@ void SwarmBot::CallbackInitProc(const swarm_bot::InitProc::ConstPtr &msg)
 	  }
 	else
 	  {
-	    this->activeRobot = msg->ID;
+	    this->activeRobot = id;
 	    if (id == this->myid)
 	      {
+		PRINT(CYAN "Active.");
 		this->ChangeState(FS_SIGNAL, true, 2500);
 	      }
 	  }
@@ -278,6 +306,9 @@ void SwarmBot::CallbackInitProc(const swarm_bot::InitProc::ConstPtr &msg)
 	int code = this->robotMap.LinkRobots(msg->ID, msg->TargetID);
 	PRINT(YELLOW "Link [%d]->[%d] [%d]", msg->ID, msg->TargetID, code);
       }
+      break;
+
+    default:
       break;
     }
 }

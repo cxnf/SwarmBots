@@ -30,7 +30,7 @@ private:
   
   SearchSubState substate;                        //!< current internal state of controller
   double lockangle;                               //!< angle to observed object
-  std::vector<double> lockdist;                        //!< measured distances
+  std::vector<double> lockdist;                   //!< measured distances
   double median;                                  //!< distance median
   
 public:
@@ -49,5 +49,5 @@ public:
     \param state New state, if any.
     \return OK_SUCCESS or error code.
   */
-  virtual int UpdateState(Devices *bot, FState *state);
+  virtual int UpdateState(Devices *bot, FState *state, BroadcastState *broadcast);
 };

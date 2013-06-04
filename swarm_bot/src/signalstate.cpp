@@ -1,7 +1,8 @@
 #include "signalstate.h++"
 
 // ----------------- Constructors ------------------------------------------------------------------
-SignalState::SignalState()
+SignalState::SignalState() : substate(SIG_SEND),
+			     restore(0)
 {
 }
 
@@ -11,7 +12,7 @@ SignalState::~SignalState()
 }
 
 // ----------------- Methods -----------------------------------------------------------------------
-int SignalState::UpdateState(Devices *bot, FState *state)
+int SignalState::UpdateState(Devices *bot, FState *state, BroadcastState *broadcast)
 {
   switch (this->substate)
     {
@@ -46,6 +47,7 @@ int SignalState::UpdateState(Devices *bot, FState *state)
 	    if (dif < 0.1)
 	      {
 		*state = FS_WAIT;
+		*broadcast = BS_NEXT_SIGNAL;
 	      }
 	    else
 	      {
