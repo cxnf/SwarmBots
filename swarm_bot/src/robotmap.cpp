@@ -56,11 +56,30 @@ int RobotMap::LinkRobots(int source, int target)
 
 int RobotMap::GetGraphCount()
 {
-  return 0;
+  int count = 0;
+  for (std::map<int, Node*>::iterator it = this->robots.begin(); it != this->robots.end(); ++it)
+    {
+      if (!it->second->GetLeader())
+	{
+	  count++;
+	}
+    }
+  return count;
 }
 
 int RobotMap::GetGraphLeader(int graph)
 {
+  int count = 0;
+  for (std::map<int, Node*>::iterator it = this->robots.begin(); it != this->robots.end(); ++it)
+    {
+      if (!it->second->GetLeader())
+	{
+	  if (++count == graph)
+	    {
+	      return it->second->GetID();
+	    }
+	}
+    }
   return 0;
 }
 

@@ -15,6 +15,9 @@
 class FollowState : public IStateController
 {
 private:
+  double distance;
+  double angle;
+  bool init;
 
 public:
   /*! \brief Default constructor.

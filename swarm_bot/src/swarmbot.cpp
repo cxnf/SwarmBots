@@ -204,7 +204,6 @@ void SwarmBot::ChangeState(FState fstate, bool backup, int delay)
 
 int SwarmBot::LoadStateController()
 {
-  PRINT(GRAY "Loading [%d]", this->nextstate);
   switch (this->nextstate)
     {
     case FS_WAIT:
@@ -252,7 +251,6 @@ void SwarmBot::CallbackInitProc(const swarm_bot::InitProc::ConstPtr &msg)
 	if (p == 0)
 	  {
 	    this->ChangeState(FS_SEARCH, false, 2500);
-	    PRINT(CYAN "Active [%d]", msg->FormationState);
 	  }
 	this->activeRobot = this->robotMap.GetID(0);
       }
@@ -275,7 +273,6 @@ void SwarmBot::CallbackInitProc(const swarm_bot::InitProc::ConstPtr &msg)
 	    this->activeRobot = id;
 	    if (id == this->myid)
 	      {
-		PRINT(CYAN "Active.");
 		this->ChangeState(FS_SEARCH, true, 2500);
 	      }
 	  }
@@ -288,13 +285,22 @@ void SwarmBot::CallbackInitProc(const swarm_bot::InitProc::ConstPtr &msg)
 	if (id == 0)
 	  {
 	    // merge graphs
+	    id = this->robotMap.GetGraphLeader(1);
+	    if (id == this->myid)
+	      {
+		PRINT(YELLOW "Leader [%d]", id);
+		this->ChangeState(FS_LEADER, false);
+	      }
+	    else
+	      {
+		this->ChangeState(FS_FOLLOW, false);
+	      }
 	  }
 	else
 	  {
 	    this->activeRobot = id;
 	    if (id == this->myid)
 	      {
-		PRINT(CYAN "Active.");
 		this->ChangeState(FS_SIGNAL, true, 2500);
 	      }
 	  }
@@ -303,8 +309,10 @@ void SwarmBot::CallbackInitProc(const swarm_bot::InitProc::ConstPtr &msg)
       
     case BS_FOUND:
       {
-	int code = this->robotMap.LinkRobots(msg->ID, msg->TargetID);
-	PRINT(YELLOW "Link [%d]->[%d] [%d]", msg->ID, msg->TargetID, code);
+	if (!this->robotMap.LinkRobots(msg->ID, msg->TargetID))
+	  {
+	    // seek next
+	  }
       }
       break;
 
