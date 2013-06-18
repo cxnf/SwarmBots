@@ -15,9 +15,19 @@
 class FollowState : public IStateController
 {
 private:
-  double distance;
-  double angle;
+  double prevx;
+  double prevy;
   bool init;
+  int count;
+
+  /*! \brief Converts angle/distance to vector.
+    Converts an angle distance pair to a vector.
+    \param angle Angle to convert.
+    \param distance Distance to convert.
+    \param x out - X component of vector.
+    \param y out - Y component of vector.
+  */
+  void Convert(double angle, double distance, double *x, double *y);
 
 public:
   /*! \brief Default constructor.

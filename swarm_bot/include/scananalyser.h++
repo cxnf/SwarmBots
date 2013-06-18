@@ -8,10 +8,13 @@
 #define VERBOSE
 #define CONSOLE_COLOR
 
+#define OBJ_MARGIN 250.0
+
 // ----------------- Libraries ---------------------------------------------------------------------
 #include <list>
 #include "Aria.h"
 #include <cmath>
+
 // ----------------- Project Parts -----------------------------------------------------------------
 #include "assist.h++"
 #include "errcodes.h++"
@@ -24,6 +27,11 @@ class ScanAnalyser
 {
 private:
 
+  /*! \brief 
+    \param obj out - 
+    \return 
+  */
+  ArPose Avarage(std::list<ArPose*> *obj);
 
 public:
   /*! \brief Initializes fields.
@@ -38,11 +46,11 @@ public:
   ~ScanAnalyser();
   /*! \brief Returns the analysis of the point given by the laser.
     Returns the middle point of the object found by the laser scanner.
-    \param Pos, The position of the object.
-    \param Points, The array of points from the laser scanner.
-    \param Objects out - The distance.
+    \param pos The position of the object.
+    \param points The array of points from the laser scanner.
+    \param objects out - The distance.
     \return List with the objects with ArPose.
   */
-int Analyse(ArPos Pos, std::list<ArPoseWithTime*> Points, std::list<ArPose> *Objects);
+  int Analyse(ArPose pos, std::list<ArPoseWithTime*> *points, std::list<ArPose> *objects);
 
-}
+};

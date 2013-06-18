@@ -74,7 +74,7 @@ int RobotMap::GetGraphLeader(int graph)
     {
       if (!it->second->GetLeader())
 	{
-	  if (++count == graph)
+	  if (++count == graph || !graph)
 	    {
 	      return it->second->GetID();
 	    }

@@ -1,4 +1,4 @@
-#include ScanAnalyser.h++
+#include "scananalyser.h++"
 
 // ----------------- Constructors ------------------------------------------------------------------
 ScanAnalyser::ScanAnalyser()
@@ -12,44 +12,52 @@ ScanAnalyser::~ScanAnalyser()
 
 // ----------------- Methods -----------------------------------------------------------------------
 
-int ScanAnalyser::Analyse(ArPos pos, std::list<ArPoseWithTime*> *points, std::list<ArPose> *objects);
+int ScanAnalyser::Analyse(ArPose pos, std::list<ArPoseWithTime*> *points, std::list<ArPose> *objects)
 {
   ArPoseWithTime *prevPoint = NULL;
+  std::list<ArPose*> obj;
+  int debugint = 0;
 
-  for (std::list<ArPoseWithTime*>::iterator it = points->begin(); it != points->end(); it++)
+  for (std::list<ArPoseWithTime*>::iterator it = points->begin(); it != points->end(); ++it, ++debugint)
     {
-      if (!prevPoint)
-	{
-	  prevPoint = *it;
-	}
-      else
+      if (prevPoint)
 	{
 	  double x = (*it)->getX() - prevPoint->getX();
 	  double y = (*it)->getY() - prevPoint->getY();
 	  
-	  double length = sqrt(pow(x,2) + pow(y,2));
-	  PRINT(BLUE "Verschil in length: %f", length);
+	  double length = sqrt(pow(x, 2) + pow(y, 2));
+	  if (length > OBJ_MARGIN)
+	    {
+	      objects->push_back(this->Avarage(&obj));
+	      obj.clear();
+	    }
 	}
+      obj.push_back(*it);
+      prevPoint = (*it);
     }
-  PRINT(GREEN "-----------------------------------------------");
-
-  /*
-  double tempA = 0;
-  double tempD = 0;
-  for (std::list<ArPoseWithTime*>::iterator it = buffer->begin(); it != buffer->end(); ++it)
+  if (obj.size())
     {
-      double a = pos.findAngleTo(**it);
-      double d = pos.findDistanceTo(**it);
-
-      if( tempA == 0 && tempD == 0)
-	{
-	  tempA = a;
-	  tempD = d;
-	}
-      else
-	{
-	  
-	}
+      objects->push_back(this->Avarage(&obj));
+      obj.clear();
     }
-  */
+  return OK_SUCCESS;
+}
+
+ArPose ScanAnalyser::Avarage(std::list<ArPose*> *obj)
+{
+  double tx = 0, ty = 0;
+  if (!obj->size())
+    {
+      return ArPose();
+    }
+
+  for (std::list<ArPose*>::iterator itav = obj->begin(); itav != obj->end(); ++itav)
+    {
+      tx += (*itav)->getX();
+      ty += (*itav)->getY();
+    }
+  tx /= obj->size();
+  ty /= obj->size();
+
+  return ArPose(tx, ty);
 }

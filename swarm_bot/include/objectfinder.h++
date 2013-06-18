@@ -12,6 +12,7 @@
 
 #include "assist.h++"
 #include "errcodes.h++"
+#include "scananalyser.h++"
 
 /*! \class ObjectFinder
   \brief Object finder.
@@ -21,6 +22,7 @@ class ObjectFinder
 {
 private:
   ArLaser *laser;                                 //!< laser used for range measurements
+  ScanAnalyser scanner;                           //!< laser scan analyser
 
 public:
   /*! \brief Default contructor.
@@ -45,7 +47,7 @@ public:
     \return OK_SUCCES, ERR_FAIL or error code.
   */
   int GetClosestObject(double *angle, double *distance);
-  
+
   /*! \brief Finds distance at angle.
     Returns the distance at the given angle.
     \param angle Angle between robot and object.

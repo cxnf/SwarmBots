@@ -36,6 +36,7 @@ rosbuild_add_executable(swarm_bot
   src/main.cpp
   src/swarmbot.cpp
   src/objectfinder.cpp
+  src/scananalyser.cpp
   src/robotmap.cpp
   src/node.cpp
   src/searchstate.cpp

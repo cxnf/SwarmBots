@@ -77,6 +77,7 @@ int SwarmBot::Setup()
     {
       return ERR_ARIA_CONNECTION;
     }
+  this->robot->disableSonar();
   if (!this->laserConnector->connectLasers())
     {
       return ERR_ARIA_LASER;
@@ -264,7 +265,7 @@ void SwarmBot::CallbackInitProc(const swarm_bot::InitProc::ConstPtr &msg)
 	    int p = this->robotMap.GetPriority(this->myid);
 	    if (p == 0)
 	      {
-		this->ChangeState(FS_SIGNAL, true, 2500);
+		this->ChangeState(FS_SIGNAL, true, 3500);
 	      }
 	    this->activeRobot = this->robotMap.GetID(0);
 	  }
@@ -285,7 +286,7 @@ void SwarmBot::CallbackInitProc(const swarm_bot::InitProc::ConstPtr &msg)
 	if (id == 0)
 	  {
 	    // merge graphs
-	    id = this->robotMap.GetGraphLeader(1);
+	    id = this->robotMap.GetGraphLeader(0);
 	    if (id == this->myid)
 	      {
 		PRINT(YELLOW "Leader [%d]", id);
@@ -309,9 +310,20 @@ void SwarmBot::CallbackInitProc(const swarm_bot::InitProc::ConstPtr &msg)
       
     case BS_FOUND:
       {
-	if (!this->robotMap.LinkRobots(msg->ID, msg->TargetID))
+	if (msg->ID != msg->TargetID && msg->ID > 0 && msg->TargetID > 0)
 	  {
-	    // seek next
+	    if (!this->robotMap.LinkRobots(msg->ID, msg->TargetID))
+	      {
+		// seek next
+	      }
+	    else
+	      {
+		PRINT(GREEN "Link [%d][%d]", msg->ID, msg->TargetID);
+	      }
+	  }
+	else
+	  {
+	    PRINT(RED "Illegal link [%d]", msg->ID);
 	  }
       }
       break;

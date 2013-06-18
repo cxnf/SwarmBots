@@ -1,7 +1,8 @@
 #include "objectfinder.h++"
 
 // ----------------- Constructors ------------------------------------------------------------------
-ObjectFinder::ObjectFinder()
+ObjectFinder::ObjectFinder() : laser(NULL),
+			       scanner()
 {
 }
 
@@ -34,23 +35,17 @@ int ObjectFinder::GetClosestObject(double *angle, double *distance)
   this->laser->lockDevice();
   std::list<ArPoseWithTime*> *buffer = this->laser->getCurrentBuffer();
   ArPose p = this->laser->getRobot()->getEncoderPose();
-  *distance = this->laser->getMaxRange();
-  for (std::list<ArPoseWithTime*>::iterator it = buffer->begin(); it != buffer->end(); ++it)
-    {
-      double a = p.findAngleTo(**it);
-      double d = p.findDistanceTo(**it);
-      if (d < *distance)
-	{
-	  *distance = d;
-	  *angle = a;
-	}
-    }
+  std::list<ArPose> objects;
+  scanner.Analyse(p, buffer, &objects);
   this->laser->unlockDevice();
-
-  if (*distance >= this->laser->getMaxRange())
+  
+  if (!objects.size())
     {
       return ERR_FAIL;
     }
+  *distance = p.findAngleTo(objects.front());
+  *angle = p.findAngleTo(objects.front());
+
   return OK_SUCCESS;
 }
 
@@ -59,23 +54,25 @@ int ObjectFinder::GetObjectAt(double angle, double *distance)
   this->laser->lockDevice();
   std::list<ArPoseWithTime*> *buffer = this->laser->getCurrentBuffer();
   ArPose p = this->laser->getRobot()->getEncoderPose();
-  *distance = this->laser->getMaxRange();
-  double dif = 1.0;
-  for (std::list<ArPoseWithTime*>::iterator it = buffer->begin(); it != buffer->end(); ++it)
-    {
-      double a = p.findAngleTo(**it);
-      double b = fabs(angle - a);
-      if (b < dif)
-	{
-	  dif = b;
-	  *distance = p.findDistanceTo(**it);
-	}
-    }
+  std::list<ArPose> objects;
+  scanner.Analyse(p, buffer, &objects);
   this->laser->unlockDevice();
 
-  if (*distance >= this->laser->getMaxRange())
+  if (!objects.size())
     {
       return ERR_FAIL;
     }
+  double best = 180;
+  for (std::list<ArPose>::iterator it = objects.begin(); it != objects.end(); ++it)
+    {
+      double a = p.findAngleTo(*it);
+      double dif = fabs(angle - a);
+      if (dif < best)
+	{
+	  *distance = p.findDistanceTo(*it);
+	  best = dif;
+	}
+    }
+
   return OK_SUCCESS;
 }
