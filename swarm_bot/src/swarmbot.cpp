@@ -80,10 +80,10 @@ int SwarmBot::Setup()
       return ERR_ARIA_CONNECTION;
     }
   this->robot->disableSonar();
-  if (!this->laserConnector->connectLasers())
+  /* if (!this->laserConnector->connectLasers())
     {
       return ERR_ARIA_LASER;
-    }
+      }*/
   
   this->robot->enableMotors();
   this->robot->runAsync(true);
