@@ -10,6 +10,8 @@ SwarmBot::SwarmBot() : isRunning(false),
 		       state(NULL),
 		       oldstate(NULL),
 		       nextstate(FS_WAIT),
+		       actstate(FS_WAIT),
+		       activating(false),
 		       robotMap(),
 		       finder(),
 		       node(),
@@ -156,7 +158,9 @@ void SwarmBot::Run()
 	  if (code) PRINT(BLUE "Code [%d]", code);
 	  if (fs != FS_UNDEFINED)
 	    {
-	      this->ChangeState(fs, false, 0);
+	      // this->ChangeState(fs, false, 0);
+	      PRINT(MAGENTA "CHANGE [%d]", fs);
+	      this->Activate(fs);
 	    }
 	  if (bs != BS_UNDEFINED)
 	    {
@@ -185,8 +189,26 @@ void SwarmBot::Broadcast(BroadcastState state, int target)
   this->initprocOut.publish(msg);
 }
 
+void SwarmBot::Activate(FState fstate, bool backup, int delay)
+{
+  this->activating = true;
+  this->actstate = fstate;
+  this->stateDelay = delay;
+  if (fstate > FS_WAIT)
+    {
+      PRINT(BLACK "Activating");
+      this->Broadcast(BS_ACTIVE, 0);
+    }
+  else
+    {
+      PRINT(BLACK "Skip activation");
+      this->ChangeState(fstate, backup, delay);
+    }
+}
+
 void SwarmBot::ChangeState(FState fstate, bool backup, int delay)
 {
+  PRINT(BLUE "State [%p]", (void*)this->state);
   this->stateDelay = delay;
   if (this->stateDelay <= 0)
     {
@@ -194,6 +216,7 @@ void SwarmBot::ChangeState(FState fstate, bool backup, int delay)
     }
   if (backup)
     {
+      PRINT(GREEN "Backup");
       if (this->oldstate) delete this->oldstate;
       this->oldstate = this->state;
     }
@@ -211,6 +234,7 @@ int SwarmBot::LoadStateController()
       {
 	if (this->oldstate)
 	  {
+	    PRINT(BLACK "Restoring");
 	    this->state = this->oldstate;
 	    this->oldstate = NULL;
 	  }
@@ -251,10 +275,20 @@ void SwarmBot::CallbackInitProc(const swarm_bot::InitProc::ConstPtr &msg)
 	int p = this->robotMap.GetPriority(this->myid);
 	if (p == 0)
 	  {
-	    this->ChangeState(FS_SEARCH, false, 2500);
+	    // this->ChangeState(FS_SEARCH, false, 2500);
+	    this->Activate(FS_SEARCH);
 	  }
 	this->activeRobot = this->robotMap.GetID(0);
       }
+      break;
+
+    case BS_ACTIVE:
+      this->activeRobot = msg->ID;
+      if (this->activating)
+	{
+	  this->activating = false;
+	  this->ChangeState(this->actstate, true, this->stateDelay);
+	}
       break;
 
     case BS_NEXT_SEARCH:
@@ -265,7 +299,8 @@ void SwarmBot::CallbackInitProc(const swarm_bot::InitProc::ConstPtr &msg)
 	    int p = this->robotMap.GetPriority(this->myid);
 	    if (p == 0)
 	      {
-		this->ChangeState(FS_SIGNAL, true, 3500);
+		// this->ChangeState(FS_SIGNAL, true, 3500);
+		this->Activate(FS_SIGNAL);
 	      }
 	    this->activeRobot = this->robotMap.GetID(0);
 	  }
@@ -274,7 +309,8 @@ void SwarmBot::CallbackInitProc(const swarm_bot::InitProc::ConstPtr &msg)
 	    this->activeRobot = id;
 	    if (id == this->myid)
 	      {
-		this->ChangeState(FS_SEARCH, true, 2500);
+		// this->ChangeState(FS_SEARCH, true, 2500);
+		this->Activate(FS_SEARCH);
 	      }
 	  }
       }
@@ -287,9 +323,14 @@ void SwarmBot::CallbackInitProc(const swarm_bot::InitProc::ConstPtr &msg)
 	  {
 	    // merge graphs
 	    id = this->robotMap.GetGraphLeader(0);
+	    if (id == 0)
+	      {
+		PRINT(RED "No Leader");
+	      }
 	    if (id == this->myid)
 	      {
 		PRINT(YELLOW "Leader [%d]", id);
+		this->robotMap.Print();
 		this->ChangeState(FS_LEADER, false);
 	      }
 	    else
@@ -302,7 +343,8 @@ void SwarmBot::CallbackInitProc(const swarm_bot::InitProc::ConstPtr &msg)
 	    this->activeRobot = id;
 	    if (id == this->myid)
 	      {
-		this->ChangeState(FS_SIGNAL, true, 2500);
+		// this->ChangeState(FS_SIGNAL, true, 2500);
+		this->Activate(FS_SIGNAL);
 	      }
 	  }
       }
@@ -312,7 +354,7 @@ void SwarmBot::CallbackInitProc(const swarm_bot::InitProc::ConstPtr &msg)
       {
 	if (msg->ID != msg->TargetID && msg->ID > 0 && msg->TargetID > 0)
 	  {
-	    if (!this->robotMap.LinkRobots(msg->ID, msg->TargetID))
+	    if (this->robotMap.LinkRobots(msg->ID, msg->TargetID))
 	      {
 		// seek next
 	      }
@@ -326,6 +368,14 @@ void SwarmBot::CallbackInitProc(const swarm_bot::InitProc::ConstPtr &msg)
 	    PRINT(RED "Illegal link [%d]", msg->ID);
 	  }
       }
+      break;
+
+    case BS_MOVE:
+      this->dev.moveallowed = true;
+      break;
+
+    case BS_STOP:
+      this->dev.moveallowed = false;
       break;
 
     default:

@@ -101,4 +101,6 @@ public:
     \return More than one root.
   */
   bool HasMultipleLeaders();
+
+  void Print();
 };

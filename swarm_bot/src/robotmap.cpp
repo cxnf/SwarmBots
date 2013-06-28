@@ -32,6 +32,7 @@ int RobotMap::LinkRobots(int source, int target)
       Node *r1 = this->robots[target];
       if (r1->HasChild(r0->GetID()))
 	{
+	  PRINT(RED "Link to child attempt");
 	  return ERR_SWARM_CYCLE;
 	}
       else
@@ -41,6 +42,7 @@ int RobotMap::LinkRobots(int source, int target)
 	    {
 	      if (l->GetID() == source)
 		{
+		  PRINT(RED "Link to leader attempt");
 		  return ERR_SWARM_CYCLE;
 		}
 	    }
@@ -50,6 +52,7 @@ int RobotMap::LinkRobots(int source, int target)
     }
   else
     {
+      PRINT(RED "Source or target missing");
       return ERR_FAIL;
     }
 }
@@ -164,4 +167,10 @@ bool RobotMap::HasMultipleLeaders()
 	}
     }
   return count > 1;
+}
+
+void RobotMap::Print()
+{
+  int id = this->GetGraphLeader(0);
+  this->robots[id]->Print();
 }

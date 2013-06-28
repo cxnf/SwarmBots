@@ -16,6 +16,9 @@ FollowState::~FollowState()
 // ----------------- Methods -----------------------------------------------------------------------
 int FollowState::UpdateState(Devices *bot, FState *state, BroadcastState *broadcast)
 {
+  if (!bot->moveallowed)
+    return OK_SUCCESS;
+
   double a, d;
   if (!this->init)
     {
@@ -29,25 +32,39 @@ int FollowState::UpdateState(Devices *bot, FState *state, BroadcastState *broadc
   bot->robot->lock();
   if (!bot->finder->GetClosestObject(&a, &d))
     {
-      double x, y, dif;
+      double x, y;
       this->Convert(a, d, &x, &y);
-      int speed = 80;
-      dif = y - this->prevy;
-      if (dif < 0)
+      int speed = 60;
+      double dify = y - this->prevy;
+      speed += dify;
+/*
+      if (dify < 0)
 	{
 	  speed -= 50;
 	}
-      else if (dif > 0)
+      else if (dify > 0)
 	{
 	  speed += 50;
 	}
-      dif = x - this->prevx;
-      bot->robot->setVel2(speed, speed);
+*/
+      double difx = (x - this->prevx) / 10;
+      bot->robot->setVel2(speed + difx, speed - difx);
+/*
+      if (difx < 0)
+	{
+	  bot->robot->setVel2(speed - 10, speed + 10);
+	}
+      else if (difx > 0)
+	{
+	  bot->robot->setVel2(speed + 10, speed - 10);
+	}
+*/
+      // bot->robot->setVel2(speed, speed);
     }
   else
     {
       bot->robot->setVel2(0, 0);
-      PRINT(RED "Panic!");
+      // PRINT(RED "Panic!");
     }
   bot->robot->unlock();
   

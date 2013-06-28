@@ -27,8 +27,21 @@ int SearchState::UpdateState(Devices *bot, FState *state, BroadcastState *broadc
 	    ArPose p = bot->robot->getEncoderPose();
 	    if (!bot->finder->GetClosestObject(&this->lockangle, &d))
 	      {
+		/* double a = this->lockangle - p.getTh();
+		   PRINT(GREEN "[%f] - [%f] = [%f]", p.getTh(), this->lockangle, a);
+		   if (a > 80)
+		   {
+		   bot->robot->setHeading(p.getTh() + 10);
+		   }
+		   else if (a < -80)
+		   {
+		   bot->robot->setHeading(p.getTh() - 10);
+		   }
+		   else
+		   {*/
 		this->substate = SER_LOCK;
 		this->lockdist.clear();
+		// }
 	      }
 	    else
 	      {
@@ -72,6 +85,7 @@ int SearchState::UpdateState(Devices *bot, FState *state, BroadcastState *broadc
 	if (!bot->finder->GetObjectAt(this->lockangle, &d))
 	  {
 	    double dif = fabs(this->median - d);
+	    // PRINT(BLACK "{%f}", dif);
 	    if (dif > 15.0)
 	      {
 		*state = FS_WAIT;

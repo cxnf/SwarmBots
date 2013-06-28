@@ -43,7 +43,20 @@ int ObjectFinder::GetClosestObject(double *angle, double *distance)
     {
       return ERR_FAIL;
     }
-  *distance = p.findAngleTo(objects.front());
+
+  /*
+  *distance = this->laser->getMaxRange();
+  for (std::list<ArPose>::iterator it = objects.begin(); it != objects.end(); ++it)
+    {
+      double d = p.findDistanceTo(*it);
+      if (d < *distance)
+	{
+	  *distance = d;
+	  *angle = p.findAngleTo(objects.front());	  
+	}
+    }
+  */
+  *distance = p.findDistanceTo(objects.front());
   *angle = p.findAngleTo(objects.front());
 
   return OK_SUCCESS;

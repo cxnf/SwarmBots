@@ -41,22 +41,32 @@ bool Node::HasChild(int id, std::list<int> *l)
 {
   if (l == 0)
     {
+      PRINT(CYAN "New test");
       l = new std::list<int>;
       bool b = this->HasChild(id, l);
       delete l;
       return b;
-    } else
+    }
+  else
     {
+      if (this->followers.size()) { PRINT(CYAN " Test [%d][%d]", id, this->id); }
+      else { PRINT(CYAN " No test"); }
+
       for (std::list<Node*>::iterator it = this->followers.begin(); it != this->followers.end(); ++it)
 	{
 	  if ((*it)->id == id)
 	    {
 	      return true;
-	    } else
+	    }
+	  else
 	    {
 	      std::list<int>::iterator p = std::find(l->begin(), l->end(), (*it)->id);
-	      l->push_back((*it)->id);
-	      if ((*it)->HasChild((*it)->id, l))
+	      if (p != l->end())
+		{
+		  l->push_back((*it)->id);
+		  PRINT(CYAN "  Skipping [%d]", (*it)->id);
+		}
+	      else if ((*it)->HasChild(id, l))
 		{
 		  return true;
 		}
@@ -64,4 +74,13 @@ bool Node::HasChild(int id, std::list<int> *l)
 	}
       return false;
     }
+}
+
+void Node::Print(int depth)
+{
+  for (int i = 0; i < depth; ++i)
+    printf(" ");
+  PRINT(MAGENTA "Node [%d]", this->id);
+  for (std::list<Node*>::iterator it = this->followers.begin(); it != this->followers.end(); ++it)
+    (*it)->Print(depth + 1);
 }

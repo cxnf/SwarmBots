@@ -63,7 +63,9 @@ public:
     This is safe to use in a cyclic graph.
     \param id Id of robot to seek.
     \param l List of previously encountered ids, NULL if first call.
-    \return Value indicating id 
+    \return Value indicating id is a follower.
   */
   bool HasChild(int id, std::list<int> *l = 0);
+
+  void Print(int depth = 0);
 };

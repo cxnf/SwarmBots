@@ -50,6 +50,8 @@ private:
   IStateController *state;                        //!< current state controller
   IStateController *oldstate;                     //!< backup state controller
   FState nextstate;                               //!< type of state controller to load
+  FState actstate;                                //!< type of state controller to load after activating
+  bool activating;                                //!< flag indicating change state is waiting on active message
 
   RobotMap robotMap;                              //!< map (and graph if build) of swarm robots
   ObjectFinder finder;                            //!< object finder
@@ -59,6 +61,7 @@ private:
   ros::Subscriber heartbeatIn;                    //!< receiver for hearbeat topic
   ros::Publisher initprocOut;                     //!< init procedure writer
   ros::Subscriber initprocIn;                     //!< init procedure receiver
+  //  ros::Subscriber navigation;                     //!< navigation receiver
   
   ArArgumentParser *arguments;                    //!< argument parser for connectors
   ArRobot *robot;                                 //!< aria client
@@ -71,6 +74,7 @@ private:
   int LoadStateController();
   void ChangeState(FState fstate, bool backup = false, int delay = 1);
   void Broadcast(BroadcastState state, int target);
+  void Activate(FState fstate, bool backup = false, int delay = 1);
   
   
 public:

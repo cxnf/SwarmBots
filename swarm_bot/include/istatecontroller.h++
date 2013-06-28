@@ -18,9 +18,12 @@ enum BroadcastState
     BS_UNDEFINED = 0,                             //!< undefined behavior
     
     BS_START = 1,                                 //!< start state sequence
+    BS_ACTIVE,                                    //!< source id is active
     BS_NEXT_SEARCH,                               //!< next robot should search
     BS_NEXT_SIGNAL,                               //!< next robot should signal
     BS_FOUND,                                     //!< source identified target
+    BS_MOVE,                                      //!< swarm should start moving
+    BS_STOP,                                      //!< swarm should stop moving
   };
 
 /*! \enum FState
@@ -45,9 +48,10 @@ enum FState
 */
 struct Devices
 {
-  RobotMap *map;
-  ObjectFinder *finder;
-  ArRobot *robot;
+  RobotMap *map;                                  //!< pointer to robot map
+  ObjectFinder *finder;                           //!< pointer to object finder
+  ArRobot *robot;                                 //!< pointer to robot
+  bool moveallowed;                               //!< set when swarm should be moving
 };
 
 /*! \class IStateController
