@@ -16,6 +16,7 @@ void HandleSIGINT(int signal)
 int main(int argc, char **argv)
 {
   int ec;
+  printf("   Starting SwarmBot...\n");
   ros::init(argc, argv, "SwarmBot");
   bot = new SwarmBot;
   if ((ec = bot->Setup()))

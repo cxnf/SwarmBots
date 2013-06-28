@@ -45,6 +45,7 @@ private:
   int myid;                                       //!< id of the robot
   int activeRobot;                                //!< id of signalling (or searching) robot
   int stateDelay;                                 //!< delay in msec before state swap
+  int actDelay;                                   //!< delay set after activated
 
   Devices dev;                                    //!< devices for state controller
   IStateController *state;                        //!< current state controller

@@ -159,7 +159,6 @@ void SwarmBot::Run()
 	  if (fs != FS_UNDEFINED)
 	    {
 	      // this->ChangeState(fs, false, 0);
-	      PRINT(MAGENTA "CHANGE [%d]", fs);
 	      this->Activate(fs);
 	    }
 	  if (bs != BS_UNDEFINED)
@@ -193,22 +192,19 @@ void SwarmBot::Activate(FState fstate, bool backup, int delay)
 {
   this->activating = true;
   this->actstate = fstate;
-  this->stateDelay = delay;
+  this->actDelay = delay;
   if (fstate > FS_WAIT)
     {
-      PRINT(BLACK "Activating");
       this->Broadcast(BS_ACTIVE, 0);
     }
   else
     {
-      PRINT(BLACK "Skip activation");
       this->ChangeState(fstate, backup, delay);
     }
 }
 
 void SwarmBot::ChangeState(FState fstate, bool backup, int delay)
 {
-  PRINT(BLUE "State [%p]", (void*)this->state);
   this->stateDelay = delay;
   if (this->stateDelay <= 0)
     {
@@ -228,6 +224,7 @@ void SwarmBot::ChangeState(FState fstate, bool backup, int delay)
 
 int SwarmBot::LoadStateController()
 {
+  PRINT(BLACK "Loading... [%d]", this->nextstate);
   switch (this->nextstate)
     {
     case FS_WAIT:
@@ -276,7 +273,7 @@ void SwarmBot::CallbackInitProc(const swarm_bot::InitProc::ConstPtr &msg)
 	if (p == 0)
 	  {
 	    // this->ChangeState(FS_SEARCH, false, 2500);
-	    this->Activate(FS_SEARCH);
+	    this->Activate(FS_SEARCH, false, 1000);
 	  }
 	this->activeRobot = this->robotMap.GetID(0);
       }
@@ -287,7 +284,7 @@ void SwarmBot::CallbackInitProc(const swarm_bot::InitProc::ConstPtr &msg)
       if (this->activating)
 	{
 	  this->activating = false;
-	  this->ChangeState(this->actstate, true, this->stateDelay);
+	  this->ChangeState(this->actstate, true, this->actDelay);
 	}
       break;
 
@@ -300,7 +297,7 @@ void SwarmBot::CallbackInitProc(const swarm_bot::InitProc::ConstPtr &msg)
 	    if (p == 0)
 	      {
 		// this->ChangeState(FS_SIGNAL, true, 3500);
-		this->Activate(FS_SIGNAL);
+		this->Activate(FS_SIGNAL, true, 1000);
 	      }
 	    this->activeRobot = this->robotMap.GetID(0);
 	  }
@@ -310,7 +307,7 @@ void SwarmBot::CallbackInitProc(const swarm_bot::InitProc::ConstPtr &msg)
 	    if (id == this->myid)
 	      {
 		// this->ChangeState(FS_SEARCH, true, 2500);
-		this->Activate(FS_SEARCH);
+		this->Activate(FS_SEARCH, true, 1000);
 	      }
 	  }
       }
@@ -344,7 +341,7 @@ void SwarmBot::CallbackInitProc(const swarm_bot::InitProc::ConstPtr &msg)
 	    if (id == this->myid)
 	      {
 		// this->ChangeState(FS_SIGNAL, true, 2500);
-		this->Activate(FS_SIGNAL);
+		this->Activate(FS_SIGNAL, true, 1000);
 	      }
 	  }
       }
@@ -365,7 +362,7 @@ void SwarmBot::CallbackInitProc(const swarm_bot::InitProc::ConstPtr &msg)
 	  }
 	else
 	  {
-	    PRINT(RED "Illegal link [%d]", msg->ID);
+	    PRINT(RED "Illegal link [%d][%d]", msg->ID, msg->TargetID);
 	  }
       }
       break;
