@@ -11,13 +11,15 @@
 #define OBJ_MARGIN 250.0
 
 // ----------------- Libraries ---------------------------------------------------------------------
-#include <list>
-#include "Aria.h"
 #include <cmath>
+#include <list>
+#include <vector>
+#include "Aria.h"
 
 // ----------------- Project Parts -----------------------------------------------------------------
 #include "assist.h++"
 #include "errcodes.h++"
+#include "scan.h++"
 
 /*! class ScanAnalyser
   \brief Detects objects with data from the point cloud.
@@ -53,4 +55,6 @@ public:
   */
   int Analyse(ArPose pos, std::list<ArPoseWithTime*> *points, std::list<ArPose> *objects);
 
+
+  void AnalyseBuffer(std::vector<Scan> *buffer, std::list<Scan> *objects);
 };

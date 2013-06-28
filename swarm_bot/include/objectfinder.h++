@@ -8,10 +8,14 @@
 
 #include <list>
 #include <map>
+#include <vector>
 #include "Aria.h"
+#include "ros/ros.h"
+#include "sensor_msgs/LaserScan.h"
 
 #include "assist.h++"
 #include "errcodes.h++"
+#include "scan.h++"
 #include "scananalyser.h++"
 
 /*! \class ObjectFinder
@@ -23,6 +27,7 @@ class ObjectFinder
 private:
   ArLaser *laser;                                 //!< laser used for range measurements
   ScanAnalyser scanner;                           //!< laser scan analyser
+  std::vector<Scan> scanresults;                  //!< scan buffer
 
 public:
   /*! \brief Default contructor.
@@ -55,4 +60,7 @@ public:
     \return OK_SUCCESS, ERR_FAIL or error code.
   */
   int GetObjectAt(double angle, double *distance);
+
+
+  void CallbackScan(const sensor_msgs::LaserScan::ConstPtr &msg);
 };

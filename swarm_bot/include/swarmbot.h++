@@ -63,6 +63,7 @@ private:
   ros::Publisher initprocOut;                     //!< init procedure writer
   ros::Subscriber initprocIn;                     //!< init procedure receiver
   //  ros::Subscriber navigation;                     //!< navigation receiver
+  ros::Subscriber laserscan;                      //!< scan data from the laser scanner
   
   ArArgumentParser *arguments;                    //!< argument parser for connectors
   ArRobot *robot;                                 //!< aria client

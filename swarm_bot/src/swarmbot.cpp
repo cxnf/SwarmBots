@@ -97,6 +97,7 @@ int SwarmBot::Setup()
   this->heartbeatIn = this->node.subscribe("heartbeat", 32, &SwarmBot::CallbackHeartbeat, this);
   this->initprocOut = this->node.advertise<swarm_bot::InitProc>("initproc", 32);
   this->initprocIn = this->node.subscribe("initproc", 32, &SwarmBot::CallbackInitProc, this);
+  this->laserscan = this->node.subscribe("scan", 32, &ObjectFinder::CallbackScan, &this->finder);
 
   // --------------- SwarmBot setup ----------------------------------------------------------------
   boost::hash<std::string> str_hash;

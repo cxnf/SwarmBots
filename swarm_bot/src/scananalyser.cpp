@@ -61,3 +61,23 @@ ArPose ScanAnalyser::Avarage(std::list<ArPose*> *obj)
 
   return ArPose(tx, ty);
 }
+
+void ScanAnalyser::AnalyseBuffer(std::vector<Scan> *buffer, std::list<Scan> *objects)
+{
+  Scan *prev = NULL;
+  std::vector<Scan> scans;
+  for (std::vector<Scan>::iterator it = buffer->begin(); it != buffer->end(); ++it)
+    {
+      if (prev)
+	{
+	  PRINT(BLUE "Angle [%f] Distance [%f]", (*it).angle, (*it).distance);
+	}
+      scans.push_back(*it);
+      prev = &(*it);
+    }
+  if (scans.size())
+    {
+      // objects->push_back(this->Avarage(&scans));
+      scans.clear();
+    }
+}
