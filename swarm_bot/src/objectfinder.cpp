@@ -103,15 +103,25 @@ int ObjectFinder::GetObjectAt(double angle, double *distance)
 void ObjectFinder::CallbackScan(const sensor_msgs::LaserScan::ConstPtr &msg)
 {
   double angle = msg->angle_min;
+  bool isseperated = false;
   this->scanresults.clear();
   for (std::vector<float>::const_iterator it = msg->ranges.begin(); it != msg->ranges.end(); ++it)
     {
       if ((*it) >= msg->range_min && (*it) <= msg->range_max)
 	{
-	  Scan scan;
-	  scan.distance = (*it);
-	  scan.angle = angle;
-	  this->scanresults.push_back(scan);
+	  // Scan scan;
+	  // scan.distance = (*it);
+	  // scan.angle = angle;
+	  // scan.isseperator = false;
+	  isseperated = false;
+	  this->scanresults.push_back(Scan(*it, angle));
+	}
+      else if (!isseperated)
+	{
+	  isseperated = true;
+	  this->scanresults.push_back(Scan());
+	  // Scan scan;
+	  // scan.isseperator = true;
 	}
       
       angle += msg->angle_increment;

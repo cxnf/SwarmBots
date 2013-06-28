@@ -34,6 +34,8 @@ private:
     \return 
   */
   ArPose Avarage(std::list<ArPose*> *obj);
+  
+  Scan AvarageScan(std::vector<Scan> *scans);
 
 public:
   /*! \brief Initializes fields.

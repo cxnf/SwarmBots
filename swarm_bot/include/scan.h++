@@ -10,4 +10,8 @@ struct Scan
 {
   double distance;
   double angle;
+  bool isseperator;
+
+  Scan() : distance(0), angle(0), isseperator(true) { };
+  Scan(double d, double a) : distance(d), angle(a), isseperator(false) { };
 };
