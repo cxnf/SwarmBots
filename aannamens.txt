@@ -1,0 +1,4 @@
+Aannamens:
+* Outdoor
+* Alle objecten tijdens identificatie die bewegen zijn robots
+* Geen obstakels

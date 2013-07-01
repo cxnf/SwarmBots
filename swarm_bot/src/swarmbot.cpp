@@ -80,10 +80,12 @@ int SwarmBot::Setup()
       return ERR_ARIA_CONNECTION;
     }
   this->robot->disableSonar();
-  /* if (!this->laserConnector->connectLasers())
+#ifdef SIMULATOR
+  if (!this->laserConnector->connectLasers())
     {
       return ERR_ARIA_LASER;
-      }*/
+    }
+#endif
   
   this->robot->enableMotors();
   this->robot->runAsync(true);
@@ -156,7 +158,7 @@ void SwarmBot::Run()
 	  FState fs = FS_UNDEFINED;
 	  BroadcastState bs = BS_UNDEFINED;
 	  int code = this->state->UpdateState(&this->dev, &fs, &bs);
-	  if (code) PRINT(BLUE "Code [%d]", code);
+	  if (code) { PRINT(BLUE "Code [%d]", code); }
 	  if (fs != FS_UNDEFINED)
 	    {
 	      // this->ChangeState(fs, false, 0);
@@ -213,7 +215,6 @@ void SwarmBot::ChangeState(FState fstate, bool backup, int delay)
     }
   if (backup)
     {
-      PRINT(GREEN "Backup");
       if (this->oldstate) delete this->oldstate;
       this->oldstate = this->state;
     }
@@ -225,16 +226,23 @@ void SwarmBot::ChangeState(FState fstate, bool backup, int delay)
 
 int SwarmBot::LoadStateController()
 {
-  PRINT(BLACK "Loading... [%d]", this->nextstate);
   switch (this->nextstate)
     {
     case FS_WAIT:
       {
 	if (this->oldstate)
 	  {
-	    PRINT(BLACK "Restoring");
-	    this->state = this->oldstate;
-	    this->oldstate = NULL;
+	    if (!this->oldstate->Restoring(&dev))
+	      {
+		this->state = this->oldstate;
+		this->oldstate = NULL;
+	      }
+	    else
+	      {
+		delete this->oldstate;
+		this->state = NULL;
+		this->oldstate = NULL;
+	      }
 	  }
 	else
 	  {

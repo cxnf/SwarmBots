@@ -28,5 +28,5 @@ enum ErrorCodes
     ERR_ARIA_CONNECTION,                          //!< an aria connector failed to init or disconnected
     ERR_ARIA_LASER,                               //!< aria laser device related error
 
-    ___OutOfBounds
+    ___OutOfBounds                                //!< if you get this, you screwed up
   };

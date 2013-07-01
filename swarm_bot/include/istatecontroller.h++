@@ -66,7 +66,7 @@ public:
   */
   virtual ~IStateController() { }
   
-  /*! \brief Cyclic update handle for state contorller.
+  /*! \brief Cyclic update handle for state controller.
     Update handle for state controllers, its called at the same frequency as the main loop.
     If robot should change state, the state parameter is set to the proposed state.
     \param bot Robot devices.
@@ -75,4 +75,11 @@ public:
     \return OK_SUCCESS or error code.
   */
   virtual int UpdateState(Devices *bot, FState *state, BroadcastState *broadcast) = 0;
+
+  /*! \brief Called when state controller is restored.
+    Restore handle for state controllers.
+    \param bot Robot devices.
+    \return OK_SUCCESS, ERR_FAIL when not restoring or error code.
+  */
+  virtual int Restoring(Devices *bot) = 0;
 };

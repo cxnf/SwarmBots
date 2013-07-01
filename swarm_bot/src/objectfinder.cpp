@@ -14,7 +14,7 @@ ObjectFinder::~ObjectFinder()
 // ----------------- Methods -----------------------------------------------------------------------
 int ObjectFinder::Setup(ArRobot *robot)
 {
-  /*
+#ifdef SIMULATOR
   robot->lock();
   std::map<int, ArLaser*> *lasermap = robot->getLaserMap();
   for (std::map<int, ArLaser*>::iterator it = lasermap->begin(); it != lasermap->end(); ++it)
@@ -27,40 +27,44 @@ int ObjectFinder::Setup(ArRobot *robot)
     {
       return ERR_ARIA_LASER;
     }
-  */
+#endif
 
   return OK_SUCCESS;
 }
 
 int ObjectFinder::GetClosestObject(double *angle, double *distance)
 {
-  /*
+#ifdef SIMULATOR
   this->laser->lockDevice();
   std::list<ArPoseWithTime*> *buffer = this->laser->getCurrentBuffer();
   ArPose p = this->laser->getRobot()->getEncoderPose();
   std::list<ArPose> objects;
   scanner.Analyse(p, buffer, &objects);
   this->laser->unlockDevice();
-  */
+#else
   std::list<Scan> objects;
   scanner.AnalyseBuffer(&this->scanresults, &objects);
-  
+#endif
+
   if (!objects.size())
     {
       return ERR_FAIL;
     }
 
-  // *distance = p.findDistanceTo(objects.front());
-  // *angle = p.findAngleTo(objects.front());
+#ifdef SIMULATOR
+  *distance = p.findDistanceTo(objects.front());
+  *angle = p.findAngleTo(objects.front());
+#else
   *distance = objects.front().distance;
   *angle = objects.front().angle;
+#endif
 
   return OK_SUCCESS;
 }
 
 int ObjectFinder::GetObjectAt(double angle, double *distance)
 {
-  /*
+#ifdef SIMULATOR
   this->laser->lockDevice();
   std::list<ArPoseWithTime*> *buffer = this->laser->getCurrentBuffer();
   ArPose p = this->laser->getRobot()->getEncoderPose();
@@ -83,7 +87,7 @@ int ObjectFinder::GetObjectAt(double angle, double *distance)
 	  best = dif;
 	}
     }
-  */
+#else
   std::list<Scan> objects;
   scanner.AnalyseBuffer(&this->scanresults, &objects);
   double best = 180;
@@ -96,6 +100,7 @@ int ObjectFinder::GetObjectAt(double angle, double *distance)
 	  best = dif;
 	}
     }
+#endif
 
   return OK_SUCCESS;
 }
@@ -109,10 +114,6 @@ void ObjectFinder::CallbackScan(const sensor_msgs::LaserScan::ConstPtr &msg)
     {
       if ((*it) >= msg->range_min && (*it) <= msg->range_max)
 	{
-	  // Scan scan;
-	  // scan.distance = (*it);
-	  // scan.angle = angle;
-	  // scan.isseperator = false;
 	  isseperated = false;
 	  this->scanresults.push_back(Scan(*it, angle));
 	}
@@ -120,8 +121,6 @@ void ObjectFinder::CallbackScan(const sensor_msgs::LaserScan::ConstPtr &msg)
 	{
 	  isseperated = true;
 	  this->scanresults.push_back(Scan());
-	  // Scan scan;
-	  // scan.isseperator = true;
 	}
       
       angle += msg->angle_increment;

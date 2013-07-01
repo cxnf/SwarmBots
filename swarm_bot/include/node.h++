@@ -67,5 +67,18 @@ public:
   */
   bool HasChild(int id, std::list<int> *l = 0);
 
+  /*! \brief Returns pointer to root node.
+    Finds the root node of this node and returns a pointer to it.
+    This is safe to use in a cyclic graph.
+    \param l Pointer to list of ids already found. Used to detect cyclic.
+    \return Pointer to root node or NULL.
+  */
+  Node* FindRoot(std::list<int> *l);
+
+  /*! \brief Prints graph.
+    Prints the graph using this node as root node.
+    This is UNSAGE in cyclic graphs.
+    \param depth Current depth in tree.
+  */
   void Print(int depth = 0);
 };

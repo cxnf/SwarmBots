@@ -24,7 +24,7 @@ class RobotMap
 private:
   std::map<int, Node*> robots;                    //<! list of known robots, including map owner
   std::vector<int> priorities;                    //<! robot priorities, value is id and index is priority, lower index is higher priority
-
+  
 public:
   /*! \brief Initializes fields.
     Initializes all fields.
@@ -59,11 +59,11 @@ public:
   */
   int GetGraphLeader(int graph);
   
-
+  
   /*! \brief Handles heartbeat.
     Processes a heartbeat from robot with given id.
     \param id Id of robot.
-   */
+  */
   void Heartbeat(int id);
   /*! \brief Increments heartbeat system.
     Increments all robots in map.
@@ -71,7 +71,7 @@ public:
     \return Value indicating one or more robots where removed.
   */
   bool Increment(std::list<int> *lost);
-
+  
   /*! \brief Gets priority of id.
     Returns the priority the given id is mapped to.
     \param id Id to check.
@@ -90,7 +90,7 @@ public:
     \return Id of next robot or 0 if given robot is last.
   */
   int GetNextID(int id);
-
+  
   /*! \brief Gets id of leader.
     Returns the id of the leader.
     \return Id of leader, or 0 if none found.
@@ -102,5 +102,9 @@ public:
   */
   bool HasMultipleLeaders();
 
+  /*! \brief Prints graph.
+    Prints the first encountered graph.
+    This is UNSAFE in cyclic graphs.
+  */
   void Print();
 };

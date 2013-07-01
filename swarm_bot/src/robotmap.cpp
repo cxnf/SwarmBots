@@ -26,10 +26,40 @@ int RobotMap::AddRobot(int id)
 
 int RobotMap::LinkRobots(int source, int target)
 {
+  PRINT(YELLOW "Linking... S:%d T:%d", source, target);
   if (this->robots.count(source) && this->robots.count(target))
     {
       Node *r0 = this->robots[source];
       Node *r1 = this->robots[target];
+
+      std::list<int> l;
+      Node *root = r1->FindRoot(&l);
+      if (root)
+	{
+	  PRINT(BLUE "Root is [%d]", root->GetID());
+	  if (root->GetID() == source)
+	    {
+	      PRINT(RED "Cycle attempt to root");
+	      return ERR_SWARM_CYCLE;
+	    }
+	  else if (root->HasChild(r0->GetID()))
+	    {
+	      PRINT(RED "Cycle attempt");
+	      return ERR_SWARM_CYCLE;
+	    }
+	  else
+	    {
+	      r1->AddChild(r0);
+	      return OK_SUCCESS;
+	    }
+	}
+      else
+	{
+	  PRINT(RED "Cyclic graph");
+	  return ERR_SWARM_CYCLE;
+	}
+
+      /*
       if (r1->HasChild(r0->GetID()))
 	{
 	  PRINT(RED "Link to child attempt");
@@ -49,6 +79,7 @@ int RobotMap::LinkRobots(int source, int target)
 	  r1->AddChild(r0);
 	  return OK_SUCCESS;
 	}
+      */
     }
   else
     {
@@ -94,7 +125,8 @@ void RobotMap::Heartbeat(int id)
   if (this->robots.count(id))
     {
       // TODO: implement heartbeat system
-    } else
+    }
+  else
     {
       this->AddRobot(id);
     }

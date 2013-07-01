@@ -29,13 +29,18 @@ class ScanAnalyser
 {
 private:
 
-  /*! \brief 
-    \param obj out - 
-    \return 
+  /*! \brief Returns average.
+    Takes the average of all positions in the input list.
+    \param obj List to take average from.
+    \return Average of input values.
   */
-  ArPose Avarage(std::list<ArPose*> *obj);
-  
-  Scan AvarageScan(std::vector<Scan> *scans);
+  ArPose Average(std::list<ArPose*> *obj);
+  /*! \brief Returns average.
+    Returns the average angle and distance of all given scans.
+    \param scans List to take average from.
+    \return Average of input values.
+  */
+  Scan AverageScan(std::vector<Scan> *scans);
 
 public:
   /*! \brief Initializes fields.
@@ -52,11 +57,15 @@ public:
     Returns the middle point of the object found by the laser scanner.
     \param pos The position of the object.
     \param points The array of points from the laser scanner.
-    \param objects out - The distance.
+    \param objects out - Object positions.
     \return List with the objects with ArPose.
   */
   int Analyse(ArPose pos, std::list<ArPoseWithTime*> *points, std::list<ArPose> *objects);
 
-
+  /*! \brief Analysis the buffer.
+    Finds all objects in the scan buffer and returns a list with objects and their estimated angle and distance.
+    \param buffer Scan buffer.
+    \param objects out - List of seperate objects.
+  */
   void AnalyseBuffer(std::vector<Scan> *buffer, std::list<Scan> *objects);
 };

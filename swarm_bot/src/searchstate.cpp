@@ -85,7 +85,6 @@ int SearchState::UpdateState(Devices *bot, FState *state, BroadcastState *broadc
 	if (!bot->finder->GetObjectAt(this->lockangle, &d))
 	  {
 	    double dif = fabs(this->median - d);
-	    // PRINT(BLACK "{%f}", dif);
 	    if (dif > 15.0)
 	      {
 		*state = FS_WAIT;
@@ -101,4 +100,18 @@ int SearchState::UpdateState(Devices *bot, FState *state, BroadcastState *broadc
       break;
     }
   return OK_SUCCESS;
+}
+
+int SearchState::Restoring(Devices *bot)
+{
+  double d;
+  if (!bot->finder->GetObjectAt(this->lockangle, &d))
+    {
+      this->median = d;
+      return OK_SUCCESS;
+    }
+  else
+    {
+      return ERR_SWARM_FINDER;
+    }
 }

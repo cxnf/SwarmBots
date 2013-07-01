@@ -3,8 +3,7 @@
 // ----------------- Constructors ------------------------------------------------------------------
 FollowState::FollowState() : prevx(0),
 			     prevy(0),
-			     init(false),
-			     count(0)
+			     init(false)
 {
 }
 
@@ -34,32 +33,57 @@ int FollowState::UpdateState(Devices *bot, FState *state, BroadcastState *broadc
     {
       double x, y;
       this->Convert(a, d, &x, &y);
-      int speed = 60;
+      int speed = 80;
+      int turn = 0;
       double dify = y - this->prevy;
-      speed += dify;
-/*
       if (dify < 0)
 	{
-	  speed -= 50;
+	  if (dify < 500)
+	    {
+	      speed = 0;
+	    }
+	  else
+	    {
+	      speed -= 20;
+	    }
 	}
       else if (dify > 0)
 	{
-	  speed += 50;
+	  if (dify > 500)
+	    {
+	      speed = 200;
+	    }
+	  else
+	    {
+	      speed += 20;
+	    }
 	}
-*/
-      double difx = (x - this->prevx) / 10;
-      bot->robot->setVel2(speed + difx, speed - difx);
-/*
+      double difx = x - this->prevx;
       if (difx < 0)
 	{
-	  bot->robot->setVel2(speed - 10, speed + 10);
+	  if (difx < 500)
+	    {
+	      turn = -25;
+	    }
+	  else
+	    {
+	      turn = -5;
+	    }
+	  // bot->robot->setVel2(speed - 5, speed + 5);
 	}
       else if (difx > 0)
 	{
-	  bot->robot->setVel2(speed + 10, speed - 10);
+	  if (difx > 500)
+	    {
+	      turn = 25;
+	    }
+	  else
+	    {
+	      turn = 5;
+	    }
+	  // bot->robot->setVel2(speed + 5, speed - 5);
 	}
-*/
-      // bot->robot->setVel2(speed, speed);
+      bot->robot->setVel2(speed + turn, speed - turn);
     }
   else
     {
@@ -76,4 +100,9 @@ void FollowState::Convert(double angle, double distance, double *x, double *y)
   double t = angle * (M_PI / 180.0);
   *x = distance * sin(t);
   *y = distance * cos(t);
+}
+
+int FollowState::Restoring(Devices *bot)
+{
+  return ERR_FAIL;
 }

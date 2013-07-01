@@ -6,6 +6,7 @@
 #define DEBUG
 #define VERBOSE
 #define CONSOLE_COLOR
+#define SIMULATOR
 
 // ----------------- Libraries ---------------------------------------------------------------------
 #include <cmath>
@@ -62,7 +63,6 @@ private:
   ros::Subscriber heartbeatIn;                    //!< receiver for hearbeat topic
   ros::Publisher initprocOut;                     //!< init procedure writer
   ros::Subscriber initprocIn;                     //!< init procedure receiver
-  //  ros::Subscriber navigation;                     //!< navigation receiver
   ros::Subscriber laserscan;                      //!< scan data from the laser scanner
   
   ArArgumentParser *arguments;                    //!< argument parser for connectors
@@ -72,10 +72,33 @@ private:
   ArTime delayTimer;                              //!< timer to delay steps
   
   
-  
+  /*! \brief Loads state controller.
+    Loads the state controller associated with the nextstate field.
+    \return OK_SUCCESS or error code.
+  */
   int LoadStateController();
+
+  /*! \brief Requests a state change.
+    Requests a state controller change.
+    \param fstate State requested.
+    \param backup Save current state.
+    \param delay Delay in ms before change.
+  */
   void ChangeState(FState fstate, bool backup = false, int delay = 1);
+
+  /*! \brief Broadcasts a state.
+    Broadcasts given state to all robots.
+    \param state State to broadcast.
+    \param target Target ID to send with broadcast.
+  */
   void Broadcast(BroadcastState state, int target);
+
+  /*! \brief Requests active state and state change.
+    Broadcasts the active state and once received by this robot, requests a state change.
+    \param fstate State request.
+    \param backup Save current state.
+    \param delay Delay in ms before change AFTER active message received.
+  */
   void Activate(FState fstate, bool backup = false, int delay = 1);
   
   

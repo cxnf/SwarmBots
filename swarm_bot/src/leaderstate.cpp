@@ -33,3 +33,8 @@ int LeaderState::UpdateState(Devices *bot, FState *state, BroadcastState *broadc
 
   return OK_SUCCESS;
 }
+
+int LeaderState::Restoring(Devices *bot)
+{
+  return ERR_FAIL;
+}

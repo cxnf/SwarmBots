@@ -5,6 +5,7 @@
 */
 #define VERBOSE
 #define CONSOLE_COLOR
+#define SIMULATOR
 
 #include <list>
 #include <map>
@@ -61,6 +62,9 @@ public:
   */
   int GetObjectAt(double angle, double *distance);
 
-
+  /*! \brief Filters scan results.
+    Filters scan results and buffers range/angle pairs.
+    \param msg Pointer to scan results.
+  */
   void CallbackScan(const sensor_msgs::LaserScan::ConstPtr &msg);
 };

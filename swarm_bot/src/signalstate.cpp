@@ -60,3 +60,8 @@ int SignalState::UpdateState(Devices *bot, FState *state, BroadcastState *broadc
     }
   return OK_SUCCESS;
 }
+
+int SignalState::Restoring(Devices *bot)
+{
+  return ERR_FAIL;
+}

@@ -28,7 +28,7 @@ int ScanAnalyser::Analyse(ArPose pos, std::list<ArPoseWithTime*> *points, std::l
 	  double length = sqrt(pow(x, 2) + pow(y, 2));
 	  if (length > OBJ_MARGIN)
 	    {
-	      objects->push_back(this->Avarage(&obj));
+	      objects->push_back(this->Average(&obj));
 	      obj.clear();
 	    }
 	}
@@ -37,13 +37,13 @@ int ScanAnalyser::Analyse(ArPose pos, std::list<ArPoseWithTime*> *points, std::l
     }
   if (obj.size())
     {
-      objects->push_back(this->Avarage(&obj));
+      objects->push_back(this->Average(&obj));
       obj.clear();
     }
   return OK_SUCCESS;
 }
 
-ArPose ScanAnalyser::Avarage(std::list<ArPose*> *obj)
+ArPose ScanAnalyser::Average(std::list<ArPose*> *obj)
 {
   double tx = 0, ty = 0;
   if (!obj->size())
@@ -62,7 +62,7 @@ ArPose ScanAnalyser::Avarage(std::list<ArPose*> *obj)
   return ArPose(tx, ty);
 }
 
-Scan ScanAnalyser::AvarageScan(std::vector<Scan> *scans)
+Scan ScanAnalyser::AverageScan(std::vector<Scan> *scans)
 {
   double d = 0, a = 0;
   if (!scans->size())
@@ -90,9 +90,9 @@ void ScanAnalyser::AnalyseBuffer(std::vector<Scan> *buffer, std::list<Scan> *obj
       if (prev)
 	{
 	  double dif = fabs(prev->distance - (*it).distance);
-	  if (dif > OBJ_MARGIN || (*it).isseperator)
+	  if (dif > 0.1 || (*it).isseperator)
 	    {
-	      objects->push_back(this->AvarageScan(&scans));
+	      objects->push_back(this->AverageScan(&scans));
 	      scans.clear();
 	    }
 	}
@@ -101,7 +101,7 @@ void ScanAnalyser::AnalyseBuffer(std::vector<Scan> *buffer, std::list<Scan> *obj
     }
   if (scans.size())
     {
-      objects->push_back(this->AvarageScan(&scans));
+      objects->push_back(this->AverageScan(&scans));
       scans.clear();
     }
 }

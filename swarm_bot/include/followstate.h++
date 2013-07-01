@@ -15,10 +15,9 @@
 class FollowState : public IStateController
 {
 private:
-  double prevx;
-  double prevy;
-  bool init;
-  int count;
+  double prevx;                                   //!< initial x measurement
+  double prevy;                                   //!< initial y measurement
+  bool init;                                      //!< is initial measurement made
 
   /*! \brief Converts angle/distance to vector.
     Converts an angle distance pair to a vector.
@@ -43,7 +42,15 @@ public:
     Updates state controller.
     \param bot Available devices.
     \param state New state, if any.
+    \param broadcast State to broadcast to other robots.
     \return OK_SUCCESS or error code.
   */
   virtual int UpdateState(Devices *bot, FState *state, BroadcastState *broadcast);
+
+  /*! \brief Restore handle.
+    Restores state controller.
+    \param bot Available devices.
+    \return OK_SUCCESS or error code.
+  */
+  virtual int Restoring(Devices *bot);
 };

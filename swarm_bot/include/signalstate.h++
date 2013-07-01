@@ -21,9 +21,9 @@ private:
   */
   enum SignalSubState
     {
-      SIG_SEND = 1,
-      SIG_RESTORE,
-      SIG_FINALIZE,
+      SIG_SEND = 1,                               //<! send sub state
+      SIG_RESTORE,                                //<! restore sub state
+      SIG_FINALIZE,                               //<! finalize sub state
     };
   
   SignalSubState substate;                        //<! current internal state of controller
@@ -43,7 +43,15 @@ public:
     Updates state controller.
     \param bot Available devices.
     \param state New state, if any.
+    \param broadcast State to broadcast to other robots.
     \return OK_SUCCESS or error code.
   */
   virtual int UpdateState(Devices *bot, FState *state, BroadcastState *broadcast);
+
+  /*! \brief Restore handle.
+    Restores state controller.
+    \param bot Available devices.
+    \return OK_SUCCESS or error code.
+  */
+  virtual int Restoring(Devices *bot);
 };

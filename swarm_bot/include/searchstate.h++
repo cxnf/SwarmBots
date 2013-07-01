@@ -47,7 +47,15 @@ public:
     Updates state controller.
     \param bot Available devices.
     \param state New state, if any.
+    \param broadcast State to broadcast to other robots.
     \return OK_SUCCESS or error code.
   */
   virtual int UpdateState(Devices *bot, FState *state, BroadcastState *broadcast);
+
+  /*! \brief Restore handle.
+    Restores state controller.
+    \param bot Available devices.
+    \return OK_SUCCESS or error code.
+  */
+  virtual int Restoring(Devices *bot);
 };
