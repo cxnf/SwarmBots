@@ -16,6 +16,7 @@ SearchState::~SearchState()
 // ----------------- Methods -----------------------------------------------------------------------
 int SearchState::UpdateState(Devices *bot, FState *state, BroadcastState *broadcast)
 {
+/*
   switch (this->substate)
     {
     case SER_SEARCH:
@@ -39,6 +40,7 @@ int SearchState::UpdateState(Devices *bot, FState *state, BroadcastState *broadc
 		   }
 		   else
 		   {*/
+/*
 		this->substate = SER_LOCK;
 		this->lockdist.clear();
 		// }
@@ -99,6 +101,32 @@ int SearchState::UpdateState(Devices *bot, FState *state, BroadcastState *broadc
       }
       break;
     }
+*/
+
+  bot->finder->ScanSurroundings();
+  if (this->substate == SER_SEARCH)
+    {
+      this->substate = SER_LOCK;
+      *broadcast = BS_NEXT_SEARCH;
+      return OK_SUCCESS;
+    }
+
+  double angle, change;
+  if (!bot->finder->GetLargestChange(&angle, &change))
+    {
+      // PRINT(BLACK "[%f]", change);
+      if (change > 0.5)
+	{
+	  bot->finder->IdentifyObject(angle, bot->activebot);
+	  if (this->substate == SER_LOCK)
+	    {
+	      this->substate = SER_WATCH;
+	      *broadcast = BS_FOUND;
+	    }
+	}
+    }
+
+
   return OK_SUCCESS;
 }
 

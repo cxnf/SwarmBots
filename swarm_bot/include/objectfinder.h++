@@ -30,6 +30,10 @@ private:
   ScanAnalyser scanner;                           //!< laser scan analyser
   std::vector<Scan> scanresults;                  //!< scan buffer
 
+  // -----------------------------------------------------------------------------------------------
+  std::list<ScanResult*> surroundings;             //!< surrounding objects
+  // -----------------------------------------------------------------------------------------------
+
 public:
   /*! \brief Default contructor.
     Initializes data members.
@@ -45,6 +49,17 @@ public:
     \return OK_SUCCESS or error code.
   */
   int Setup(ArRobot *robot);
+
+
+
+
+
+  int ScanSurroundings();
+  int GetLargestChange(double *angle, double *change);
+  int IdentifyObject(double angle, int id);
+
+
+
 
   /*! \brief Finds closest object.
     Locates the closest object within view angle and returns the angle and distance to this object.

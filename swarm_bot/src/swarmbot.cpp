@@ -4,7 +4,6 @@
 SwarmBot::SwarmBot() : isRunning(false),
 		       name(),
 		       myid(0),
-		       activeRobot(0),
 		       stateDelay(0),
 		       dev(),
 		       state(NULL),
@@ -153,6 +152,8 @@ void SwarmBot::Run()
 	}
 
       // ----------- Update ------------------------------------------------------------------------
+      //      this->finder.ScanSurroundings();
+
       if (this->state)
 	{
 	  FState fs = FS_UNDEFINED;
@@ -166,7 +167,7 @@ void SwarmBot::Run()
 	    }
 	  if (bs != BS_UNDEFINED)
 	    {
-	      this->Broadcast(bs, this->activeRobot);
+	      this->Broadcast(bs, this->dev.activebot);
 	    }
 	}
 
@@ -284,12 +285,12 @@ void SwarmBot::CallbackInitProc(const swarm_bot::InitProc::ConstPtr &msg)
 	    // this->ChangeState(FS_SEARCH, false, 2500);
 	    this->Activate(FS_SEARCH, false, 1000);
 	  }
-	this->activeRobot = this->robotMap.GetID(0);
+	this->dev.activebot = this->robotMap.GetID(0);
       }
       break;
 
     case BS_ACTIVE:
-      this->activeRobot = msg->ID;
+      this->dev.activebot = msg->ID;
       if (this->activating)
 	{
 	  this->activating = false;
@@ -308,11 +309,11 @@ void SwarmBot::CallbackInitProc(const swarm_bot::InitProc::ConstPtr &msg)
 		// this->ChangeState(FS_SIGNAL, true, 3500);
 		this->Activate(FS_SIGNAL, true, 1000);
 	      }
-	    this->activeRobot = this->robotMap.GetID(0);
+	    this->dev.activebot = this->robotMap.GetID(0);
 	  }
 	else
 	  {
-	    this->activeRobot = id;
+	    this->dev.activebot = id;
 	    if (id == this->myid)
 	      {
 		// this->ChangeState(FS_SEARCH, true, 2500);
@@ -346,7 +347,7 @@ void SwarmBot::CallbackInitProc(const swarm_bot::InitProc::ConstPtr &msg)
 	  }
 	else
 	  {
-	    this->activeRobot = id;
+	    this->dev.activebot = id;
 	    if (id == this->myid)
 	      {
 		// this->ChangeState(FS_SIGNAL, true, 2500);

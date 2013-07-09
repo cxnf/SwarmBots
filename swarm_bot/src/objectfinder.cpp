@@ -2,7 +2,9 @@
 
 // ----------------- Constructors ------------------------------------------------------------------
 ObjectFinder::ObjectFinder() : laser(NULL),
-			       scanner()
+			       scanner(),
+			       scanresults(),
+			       surroundings()
 {
 }
 
@@ -31,6 +33,114 @@ int ObjectFinder::Setup(ArRobot *robot)
 
   return OK_SUCCESS;
 }
+
+
+
+
+
+
+int ObjectFinder::ScanSurroundings()
+{
+  std::list<Scan> objects;
+#ifdef SIMULATOR
+  this->laser->lockDevice();
+  {
+    std::list<ArPoseWithTime*> *buffer = this->laser->getCurrentBuffer();
+    std::list<ArPose> objs;
+    ArPose p = this->laser->getRobot()->getEncoderPose();
+    this->scanner.Analyse(p, buffer, &objs);
+    for (std::list<ArPose>::iterator it = objs.begin(); it != objs.end(); ++it)
+      {
+	double angle = p.findAngleTo(*it) * (M_PI / 180.0);
+	objects.push_back(Scan(p.findDistanceTo(*it) / 1000.0, angle));
+      }
+  }
+  this->laser->unlockDevice();
+#else
+  this->scanner.AnalyseBuffer(&this->scanresults, &objects);
+#endif
+
+  std::list<Scan>::iterator scan = objects.begin();
+  std::list<ScanResult*>::iterator sur = this->surroundings.begin();
+  while (scan != objects.end() && sur != this->surroundings.end())
+    {
+      double dif = fabs((*scan).angle - (*sur)->angle);
+      if (dif < 0.1)
+	{
+	  dif = fabs((*scan).distance - (*sur)->distance);
+	  (*sur)->change = dif;
+	  (*sur)->angle = (*scan).angle;
+	  (*sur)->distance = (*scan).distance;
+	  ++sur;
+	  ++scan;
+	}
+      else if ((*scan).angle > (*sur)->angle)
+	{
+	  this->surroundings.insert(sur, new ScanResult((*scan).distance, (*scan).angle));
+	  ++scan;
+	}
+      else
+	{
+	  delete (*sur);
+	  sur = this->surroundings.erase(sur);
+	}
+    }
+  if (sur == this->surroundings.end() && scan != objects.end())
+    {
+      for (;scan != objects.end(); ++scan)
+	{
+	  this->surroundings.insert(sur, new ScanResult((*scan).distance, (*scan).angle));
+	}
+    }
+  else if (scan == objects.end() && sur != this->surroundings.end())
+    {
+      while (sur != this->surroundings.end())
+	{
+	  delete (*sur);
+	  sur = this->surroundings.erase(sur);
+	}
+    }
+
+  return OK_SUCCESS;
+}
+
+int ObjectFinder::GetLargestChange(double *angle, double *change)
+{
+  *change = 0;
+  for (std::list<ScanResult*>::iterator it = this->surroundings.begin(); it != this->surroundings.end(); ++it)
+    {
+      if ((*it)->change > *change)
+	{
+	  *change = (*it)->change;
+	  *angle = (*it)->angle;
+	}
+    }
+
+  if (*change == 0)
+    {
+      return ERR_FAIL;
+    }
+  return OK_SUCCESS;
+}
+
+int ObjectFinder::IdentifyObject(double angle, int id)
+{
+  for (std::list<ScanResult*>::iterator it = this->surroundings.begin(); it != this->surroundings.end(); ++it)
+    {
+      if ((*it)->angle == angle)
+	{
+	  (*it)->id = id;
+	  return OK_SUCCESS;
+	}
+    }
+  return ERR_FAIL;
+}
+
+
+
+
+
+
 
 int ObjectFinder::GetClosestObject(double *angle, double *distance)
 {

@@ -52,6 +52,7 @@ struct Devices
   ObjectFinder *finder;                           //!< pointer to object finder
   ArRobot *robot;                                 //!< pointer to robot
   bool moveallowed;                               //!< set when swarm should be moving
+  int activebot;                                  //!< id of active robot
 };
 
 /*! \class IStateController
